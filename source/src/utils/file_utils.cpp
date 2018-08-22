@@ -1,21 +1,17 @@
-#ifndef __FILE_UTILS_H__
-#define __FILE_UTILS_H__
+/*
+    author: linukey
+    time: 2017.11.12
+*/
 
-#include <iostream>
-#include <string>
-#include <vector>
-#include <iterator>
-#include <algorithm>
-#include <cctype>
-#include <sstream>
-#include <fstream>
+#include "../../include/utils/file_utils.h"
 
 using namespace std;
 
-namespace linukey{
-namespace utils{
+namespace linukey {
+namespace webserver {
+namespace utils {
 
-static string read_all(const string& filename){
+string read_all(const string& filename){
     ifstream fin(filename);
     if (fin.is_open()){
         fin.seekg(0, ios::end);
@@ -31,5 +27,4 @@ static string read_all(const string& filename){
 
 }
 }
-
-#endif
+}

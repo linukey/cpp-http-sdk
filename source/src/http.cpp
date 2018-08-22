@@ -1,16 +1,11 @@
-#include "../include/http.h"
-#include "../utils/string_utils.h"
-#include <iostream>
-#include <fstream>
-#include <set>
-#include <string>
-#include <algorithm>
-#include <iterator>
-#include <cctype>
-#include <vector>
+/*
+    author: linukey
+    time: 2017.11.12
+*/
 
-using namespace std;
-using namespace linukey::utils;
+#include "../include/http.h"
+
+using namespace linukey::webserver::utils;
 
 namespace linukey{  
 namespace webserver{    
@@ -19,22 +14,33 @@ namespace http{
 void extract_header(const string& headers, const string& key, string& value){
     string result = to_lower(headers);
     size_t spos = result.find(key);
-
-    if (spos == string::npos) return;
+    if (spos == string::npos) {
+        return;
+    }
 
     size_t epos = result.find("\r\n", spos);
+    if (epos == string::npos) {
+        return;
+    }
+
     string kv = result.substr(spos, epos-spos);
 
     size_t pos;
-    while (kv.length() > 0 && (pos = kv.find(" ")) != string::npos) kv.erase(pos, 1);    
+    while (kv.length() > 0 && (pos = kv.find(" ")) != string::npos) {
+        kv.erase(pos, 1);    
+    }
 
     vector<string> strs;
     split_by_key(kv, ':', strs);
     value = strs[1];
 }
 
-void extract_request_line(const string& headers, map<string, string>& result){
-    string req_line = headers.substr(0, headers.find("\r\n"));
+void extract_request_line(const string& headers, unordered_map<string, string>& result){
+    size_t pos = headers.find("\r\n");
+    if (pos == string::npos) {
+        return;
+    }
+    string req_line = headers.substr(0, pos);
     vector<string> strs;
     split_by_key(req_line, ' ', strs);
     result["method"] = strs[0];
@@ -43,8 +49,8 @@ void extract_request_line(const string& headers, map<string, string>& result){
 }
 
 // 解析请求头
-void extract_request(const string& headers, Request* req){
-    map<string, string> req_line;
+void extract_request(const string& headers, shared_ptr<Request> req){
+    unordered_map<string, string> req_line;
     extract_request_line(headers, req_line);
 
     req->method = req_line["method"];
@@ -56,15 +62,23 @@ void extract_request(const string& headers, Request* req){
 }
 
 // 解析请求体
-void extract_datas(const string& req_datas, map<string, string>& datas){
+void extract_datas(const string& req_datas, unordered_map<string, string>& datas){
     if (!req_datas.length()) return;
     // split data by '&'
     vector<string> v_data;
     split_by_key(req_datas, '&', v_data);
     // split data k-v by '='
     for (auto data : v_data){   
-        string key = data.substr(0, data.find('='));
-        string value = data.substr(data.find('=')+1);
+        size_t pos = data.find('=');
+        if (pos == string::npos) {
+            return;
+        }
+        string key = data.substr(0, pos);
+        pos = data.find('=');
+        if (pos == string::npos) {
+            return;
+        }
+        string value = data.substr(pos+1);
         datas[key] = value;
     }
 }

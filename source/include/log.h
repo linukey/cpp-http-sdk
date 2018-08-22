@@ -1,7 +1,6 @@
 /*
     author: linukey
     time: 2017.11.12
-    ps:
 */
 
 #ifndef __LINUKEY_LOG_H__
@@ -10,8 +9,9 @@
 #include <iostream>
 #include <fstream>
 
-namespace linukey{
-namespace log{
+namespace linukey {
+namespace webserver {
+namespace log {
 
 enum LOG_LEVEL{
     TRACE = 0,
@@ -31,8 +31,8 @@ const vector<std::string> LOG_LEVEL_STR{
     "FATAL"
 };
 
-const std::string positive_log_file="webserver.log1";
-const std::string negative_log_file="webserver.log2";
+const std::string positive_log_file="webserver.log";
+const std::string negative_log_file="webserver.log.wf";
 
 static void LOGOUT(LOG_LEVEL level, std::string message) {
     std::string log_file;
@@ -67,6 +67,7 @@ static void LOGOUT(LOG_LEVEL level, std::string message) {
     fout.close();
 }
 
+}
 }
 }
 

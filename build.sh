@@ -1,16 +1,11 @@
 #! /bin/bash
 
-rm -rf server-tool
+rm -rf own_business 2>/dev/null
+mkdir -p own_business/lib/include
 
-mkdir server-tool
-mkdir server-tool/lib
-mkdir server-tool/lib/include
-mkdir server-tool/control
-
-cp -r source/include server-tool/lib/
+cp -r source/include own_business/lib/
 make -C source
-cp source/libwebserver.a server-tool/lib
+cp source/libwebserver.a own_business/lib
 make clean -C source
 
-cp example/main.cpp server-tool/control
-cp example/Makefile server-tool
+cp example/* own_business -r

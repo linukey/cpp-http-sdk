@@ -1,23 +1,35 @@
+/*
+    author: linukey
+    time: 2017.11.12
+*/
+
 #ifndef __LINUKEY_WEBSERVER_REQUEST__
 #define __LINUKEY_WEBSERVER_REQUEST__
 
+#include "../include/utils/string_utils.h"
+
+#include <iostream>
+#include <fstream>
 #include <string>
-#include <map>
+#include <algorithm>
+#include <iterator>
+#include <cctype>
+#include <memory>
 #include <vector>
-#include <set>
+#include <unordered_map>
 
 using std::string;
-using std::map;
+using std::unordered_map;
 using std::vector;
-using std::set;
+using std::shared_ptr;
 
 namespace linukey{  
 namespace webserver{    
 namespace http{
 
 struct Request{
-    map<string, string> headers;
-    map<string, string> datas;
+    unordered_map<string, string> headers;
+    unordered_map<string, string> datas;
 
     string host;
     string method;   
@@ -50,9 +62,9 @@ static const string HEADER = "HTTP/1.1 200 OK\r\n" \
 
 // help tools
 void extract_header(const string& headers, const string& key, string& value);
-void extract_datas(const string& req_datas, map<string, string>& datas);
-void extract_request(const string& headers, Request* req);
-void extract_request_line(const string& headers, map<string, string>& req_line);
+void extract_datas(const string& req_datas, unordered_map<string, string>& datas);
+void extract_request(const string& headers, shared_ptr<Request> req);
+void extract_request_line(const string& headers, unordered_map<string, string>& req_line);
 
 }
 }
