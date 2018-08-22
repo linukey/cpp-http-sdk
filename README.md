@@ -7,4 +7,9 @@
 #### 1. cd WebServer
 #### 2. sh build.sh 
 #### 3. cd own_business
-#### 4. 在 own_business 目录中的main里面，实现自己的业务逻辑
+#### 4. 在 own_business 目录中的main.cpp里面，实现自己的业务逻辑
+
+#### 开发环境:
+#### 1. centos 6
+#### 2. gcc version 4.8.2 (GCC)
+#### 3. boost 1.6
