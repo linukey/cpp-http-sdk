@@ -38,10 +38,13 @@ public:
 
     // 响应
     void response(shared_socket sock, std::string message);
+
     // 启动
     void run();
 
 private:
+    void accept();
+
     const int buffer_size;
 
     void accept_handle(shared_socket sock, const e_code& err);

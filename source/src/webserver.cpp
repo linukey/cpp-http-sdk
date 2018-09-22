@@ -22,9 +22,13 @@ WebServer::WebServer(int buffer_size, int port) :
 
 void WebServer::run(){    
     LOGOUT(INFO, "start server...");
+    accept();
+    SERVICE.run();
+}
+
+void WebServer::accept() {
     shared_socket sock(new ip::tcp::socket(SERVICE));
     ACCEPTOR.async_accept(*sock, boost::bind(&WebServer::accept_handle, this, sock, _1));
-    SERVICE.run();
 }
 
 void WebServer::accept_handle(shared_socket sock, const e_code& err){
