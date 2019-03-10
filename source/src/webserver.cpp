@@ -17,8 +17,8 @@ using namespace linukey::webserver::utils;
 
 WebServer::WebServer(int buffer_size, int port) : 
     ACCEPTOR(SERVICE, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
-    buffer_size(buffer_size)
-{}
+    buffer_size(buffer_size) {
+}
 
 void WebServer::run(){    
     LOGOUT(INFO, "start server...");
@@ -49,7 +49,7 @@ void WebServer::accept_handle(shared_socket sock, const e_code& err){
                bind(&WebServer::read_complete, this, req, buff, _1, _2),
                bind(&WebServer::read_handle, this, req, sock, _1));
 
-    run();
+    accept();
 }
 
 // 逐个字节的读
