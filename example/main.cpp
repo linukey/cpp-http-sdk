@@ -30,27 +30,6 @@ string read_file(fstream& fin) {
     return string(buf.get(), length);
 }
 
-bool read_conf(const string& file_path) {
-    fstream fout(file_path);
-    if (!fout.is_open()) {
-        return false;
-    }
-    string line;
-    while (getline(fout, line)) {
-        if (line.empty() || line.find("#") == 0) {
-            continue;
-        }
-        size_t split_pos = line.find(":");
-        if (split_pos == string::npos) {
-            return false;
-        }
-        string key = line.substr(0, split_pos);
-        string value = line.substr(split_pos+1);
-        g_conf[key] = value;
-    }
-    return true;
-}
-
 /*
  * 通过继承WebServer类，重写router方法，实现自己的业务端路由
  * 可以快速搭建一个本地http-server，而不必去关心http-server的底层实现
@@ -82,7 +61,7 @@ public:
  * 可以修改这个文件，来实现自己的业务路由
  */
 int main(){
-    if (!read_conf("webserver.conf")) {
+    if (!MyServer::read_conf("webserver.conf")) {
         cerr << "read conf fail!" << endl;
         return 0;
     }

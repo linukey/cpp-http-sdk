@@ -107,3 +107,24 @@ void WebServer::response(shared_socket sock, string message) {
     message = HEADER + message;
     sock->async_write_some(buffer(message), bind(&WebServer::write_handle, this, _1));
 }
+
+bool WebServer::read_conf(const string& file_path, std::map<string, string>& g_conf) {
+    std::fstream fout(file_path);
+    if (!fout.is_open()) {
+        return false;
+    }
+    string line;
+    while (std::getline(fout, line)) {
+        if (line.empty() || line.find("#") == 0) {
+            continue;
+        }
+        size_t split_pos = line.find(":");
+        if (split_pos == string::npos) {
+            return false;
+        }
+        string key = line.substr(0, split_pos);
+        string value = line.substr(split_pos+1);
+        g_conf[key] = value;
+    }
+    return true;
+}

@@ -42,6 +42,9 @@ public:
     // 启动
     void run();
 
+    // 加载配置文件
+    static bool read_conf(const std::string& file_path, std::map<std::string, std::string>& g_conf);
+
 private:
     void accept();
 
