@@ -18,11 +18,11 @@
 #include <memory>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
-#include "http.h"
+#include "request.h"
 
 using std::shared_ptr;
 using std::string;
-using linukey::webserver::http::Request;
+using linukey::webserver::request::Request;
 
 namespace linukey{  
 namespace webserver{
