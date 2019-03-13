@@ -11,7 +11,7 @@ namespace linukey{
 namespace webserver{    
 namespace request{
 
-void extract_header(const string& headers, const string& key, string& value){
+void Request::extract_header(const string& headers, const string& key, string& value){
     string result = LowerString(headers);
     size_t spos = result.find(key);
     if (spos == string::npos) {
@@ -34,7 +34,7 @@ void extract_header(const string& headers, const string& key, string& value){
     value = strs[1];
 }
 
-void extract_request_line(const string& headers, unordered_map<string, string>& result){
+void Request::extract_request_line(const string& headers, unordered_map<string, string>& result){
     size_t pos = headers.find("\r\n");
     if (pos == string::npos) {
         return;
@@ -47,19 +47,65 @@ void extract_request_line(const string& headers, unordered_map<string, string>& 
 }
 
 // 解析请求头
-void extract_request(const string& request, shared_ptr<Request> req){
+void Request::extract_request(const string& request){
     unordered_map<string, string> req_line;
     extract_request_line(request, req_line);
 
-    req->setMethod(req_line["method"]);
-    req->setUrl(req_line["url"]);
-    req->setProtocol(req_line["protocol"]);
+    _method = req_line["method"];
+    _url = req_line["url"];
+    _protocol = req_line["protocol"];
 
     for (int i = CONTENT_LENGTH; i <REQUEST_HEADER_NUMS; ++i) {
         string key = REQUEST_HEADERS_STR[i];
         string val;
         extract_header(request, key, val);
-        req->setHeader(key, val);
+        _headers[key] =  val;
+    }
+}
+
+void Request::setMethod(const string& method) { 
+    _method = method;
+}
+
+void Request::setUrl(const string& url) { 
+    _url = url; 
+}
+
+void Request::setProtocol(const string& protocol) { 
+    _protocol = protocol; 
+}
+
+void Request::setHeader(const string& key, const string& val) { 
+    _headers[key] = val; 
+}
+
+void Request::setData(const string& data) { 
+    _data = data; 
+}
+
+const string& Request::getMethod() const { 
+    return _method; 
+}
+
+const string& Request::getUrl() const { 
+    return _url; 
+}
+
+const string& Request::getProtocol() const { 
+    return _protocol; 
+}
+
+const string& Request::getHeader(const string& key) { 
+    return _headers[key]; 
+}
+
+const string& Request::getData() const { 
+    return _data; 
+}
+
+void Request::printHeaders() {
+    for (auto it = _headers.begin(); it != _headers.end(); ++it) {
+        cout << it->first << ":" << it->second << endl;
     }
 }
 

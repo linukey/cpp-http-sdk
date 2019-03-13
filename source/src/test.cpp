@@ -5,7 +5,7 @@
 #include "http_common.h"
 #include "utils/file_utils.h"
 
-using namespace linukey::webserver::http_common;
+using linukey::webserver::http_common::HttpCommon;
 using namespace linukey::webserver::utils;
 using namespace std;
 
@@ -15,7 +15,7 @@ int main() {
 
     string data = read_all("1");
 
-    post_extract(content_type, data, m);
+    HttpCommon::post_extract(content_type, data, m);
 
     return 0;
 }

@@ -21,7 +21,7 @@ WebServer::WebServer(int buffer_size, int port) :
 }
 
 void WebServer::run(){    
-    LOGOUT(INFO, "start server...");
+    LOGOUT(INFO, "%", "start server...");
     accept();
     SERVICE.run();
 }
@@ -33,7 +33,7 @@ void WebServer::accept() {
 
 void WebServer::accept_handle(shared_socket sock, const e_code& err){
     if (err){
-        LOGOUT(FATAL, "accept fatal");
+        LOGOUT(FATAL, "%", "accept fatal");
         return;
     }
 
@@ -51,7 +51,7 @@ void WebServer::accept_handle(shared_socket sock, const e_code& err){
 // 逐个字节的读
 size_t WebServer::read_complete(shared_ptr<Request> req, shared_ptr<char> buff, const e_code& err, size_t size){
     if (err) {
-        LOGOUT(FATAL, "receive request error");
+        LOGOUT(FATAL, "%", "receive request error");
         return 0;
     }
 
@@ -62,7 +62,7 @@ size_t WebServer::read_complete(shared_ptr<Request> req, shared_ptr<char> buff, 
     }
 
     if (req->getMethod().empty()){
-        extract_request(request, req);
+        req->extract_request(request);
         if (LowerString(req->getMethod()) == "get") {
             return false;
         } else if (LowerString(req->getMethod()) == "post") {
@@ -82,11 +82,11 @@ size_t WebServer::read_complete(shared_ptr<Request> req, shared_ptr<char> buff, 
 
 void WebServer::read_handle(shared_ptr<Request> req, shared_socket sock, const e_code& err){
     if (err){
-        LOGOUT(ERROR, "read handel error");
+        LOGOUT(ERROR, "%", "read handel error");
         return;
     }
 
-    LOGOUT(INFO, req->getHeader(REQUEST_HEADERS_STR[HOST]) + " request " + req->getUrl() + " ...");
+    LOGOUT(INFO, "% request % ...", req->getHeader(REQUEST_HEADERS_STR[HOST]), req->getUrl());
 
     router(req, sock);
     sock->close();
@@ -94,7 +94,7 @@ void WebServer::read_handle(shared_ptr<Request> req, shared_socket sock, const e
 
 void WebServer::write_handle(const e_code& err){
     if (err){
-        LOGOUT(ERROR, "write handel error");
+        LOGOUT(ERROR, "%", "write handel error");
         return;
     }
 }

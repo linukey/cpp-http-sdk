@@ -11,9 +11,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <algorithm>
-#include <iterator>
-#include <cctype>
 #include <memory>
 #include <vector>
 #include <unordered_map>
@@ -28,40 +25,6 @@ using std::endl;
 namespace linukey{  
 namespace webserver{    
 namespace request{
-
-// 请求报文
-struct Request{
-private:
-    // 请求行
-    string _method;   
-    string _url;
-    string _protocol;
-
-    // 请求头
-    unordered_map<string, string> _headers;
-
-    // 请求体
-    string _data;
-
-public:
-    void setMethod(const string& method) { _method = method; }
-    void setUrl(const string& url) { _url = url; }
-    void setProtocol(const string& protocol) { _protocol = protocol; }
-    void setHeader(const string& key, const string& val) { _headers[key] = val; }
-    void setData(const string& data) { _data = data; }
-
-    const string& getMethod() const { return _method; }
-    const string& getUrl() const { return _url; }
-    const string& getProtocol() const { return _protocol; }
-    const string& getHeader(const string& key) { return _headers[key]; }
-    const string& getData() const { return _data; }
-    
-    void printHeaders() {
-        for (auto it = _headers.begin(); it != _headers.end(); ++it) {
-            cout << it->first << ":" << it->second << endl;
-        }
-    }
-};
 
 // 请求方法
 enum REQUEST_METHOD{
@@ -88,8 +51,42 @@ static vector<string> REQUEST_HEADERS_STR = {
     "host"
 };
 
-// help tools
-void extract_request(const string& request, shared_ptr<Request> req);
+// 请求报文
+class Request{
+private:
+    // 请求行
+    string _method;   
+    string _url;
+    string _protocol;
+
+    // 请求头
+    unordered_map<string, string> _headers;
+
+    // 请求体
+    string _data;
+
+public:
+    void extract_request(const string& request);
+
+protected:
+    void extract_header(const string& headers, const string& key, string& value);
+    void extract_request_line(const string& headers, unordered_map<string, string>& result);
+
+public:
+    void setMethod(const string& method);
+    void setUrl(const string& url);
+    void setProtocol(const string& protocol);
+    void setHeader(const string& key, const string& val);
+    void setData(const string& data);
+
+    const string& getMethod() const;
+    const string& getUrl() const;
+    const string& getProtocol() const;
+    const string& getHeader(const string& key);
+    const string& getData() const;
+    
+    void printHeaders();
+};
 
 static const string HEADER = "HTTP/1.1 200 OK\r\n" \
                             "Connection: close\r\n" \

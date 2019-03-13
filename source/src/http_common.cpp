@@ -11,7 +11,7 @@ namespace http_common {
 using linukey::webserver::utils::SplitString;
 using linukey::webserver::utils::Trim;
 
-bool post_extract(const string& data,
+bool HttpCommon::post_extract(const string& data,
                   unordered_map<string, string>& ret) {
 
     vector<string> lines = SplitString(data, "&");
@@ -23,7 +23,7 @@ bool post_extract(const string& data,
     return true;
 }
 
-bool post_extract(const string& content_type,
+bool HttpCommon::post_extract(const string& content_type,
                   const string& data,
                   unordered_map<string, string>& ret) {
     vector<string> st = SplitString(content_type, "=");
