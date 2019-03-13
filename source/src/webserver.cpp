@@ -8,12 +8,14 @@
 #include "log.h"
 #include "utils/string_utils.h"
 #include "utils/file_utils.h"
+#include "http_common.h"
 
 using namespace boost::asio;
 using namespace linukey::webserver;
 using namespace linukey::webserver::request;
 using namespace linukey::webserver::log;
 using namespace linukey::webserver::utils;
+using namespace linukey::webserver::http_common;
 
 WebServer::WebServer(int buffer_size, int port) : 
     ACCEPTOR(SERVICE, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
@@ -56,7 +58,7 @@ size_t WebServer::read_complete(shared_ptr<Request> req, shared_ptr<char> buff, 
     }
 
     string request(buff.get(), size);
-    size_t pos = request.find("\r\n\r\n");
+    size_t pos = request.find(CRLF + CRLF);
     if (pos == string::npos) {
         return true;
     }
@@ -66,11 +68,11 @@ size_t WebServer::read_complete(shared_ptr<Request> req, shared_ptr<char> buff, 
         if (LowerString(req->getMethod()) == "get") {
             return false;
         } else if (LowerString(req->getMethod()) == "post") {
-            return stoi(req->getHeader(REQUEST_HEADERS_STR[CONTENT_LENGTH])) != 0;
+            return stoi(req->getHeader(HEADERS_STR[CONTENT_LENGTH])) != 0;
         }
     } else {
         string data = request.substr(pos + 4);    
-        int content_length = stoi(req->getHeader(REQUEST_HEADERS_STR[CONTENT_LENGTH]));
+        int content_length = stoi(req->getHeader(HEADERS_STR[CONTENT_LENGTH]));
         if (int(data.size()) == content_length) {
             req->setData(data);
             return false;
@@ -86,7 +88,7 @@ void WebServer::read_handle(shared_ptr<Request> req, shared_socket sock, const e
         return;
     }
 
-    LOGOUT(INFO, "% request % ...", req->getHeader(REQUEST_HEADERS_STR[HOST]), req->getUrl());
+    LOGOUT(INFO, "% request % ...", req->getHeader(HEADERS_STR[HOST]), req->getUrl());
 
     router(req, sock);
     sock->close();
@@ -99,9 +101,12 @@ void WebServer::write_handle(const e_code& err){
     }
 }
 
-void WebServer::response(shared_socket sock, string message) {
-    message = HEADER + message;
-    sock->async_write_some(buffer(message), bind(&WebServer::write_handle, this, _1));
+void WebServer::response(shared_socket sock, const string& message) {
+    sock->async_write_some(buffer(HEADER + message), bind(&WebServer::write_handle, this, _1));
+}
+
+void WebServer::response(shared_socket sock, const string& header, const string& message) {
+    sock->async_write_some(buffer(header + message), bind(&WebServer::write_handle, this, _1));
 }
 
 bool WebServer::read_conf(const string& file_path, std::map<string, string>& g_conf) {

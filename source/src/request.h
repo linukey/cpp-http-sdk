@@ -7,6 +7,7 @@
 #define __LINUKEY_WEBSERVER_REQUEST__
 
 #include "utils/string_utils.h"
+#include "http_common.h"
 
 #include <iostream>
 #include <fstream>
@@ -21,6 +22,8 @@ using std::vector;
 using std::shared_ptr;
 using std::cout;
 using std::endl;
+
+using namespace linukey::webserver::http_common;
 
 namespace linukey{  
 namespace webserver{    
@@ -37,20 +40,6 @@ static vector<string> REQUEST_METHOD_STR = {
     "post"  
 };
 
-// 请求头
-enum REQUEST_HEADERS{
-    CONTENT_LENGTH = 0,
-    CONTENT_TYPE,
-    HOST,
-    REQUEST_HEADER_NUMS
-};
-
-static vector<string> REQUEST_HEADERS_STR = {
-    "content-length",  
-    "content-type",
-    "host"
-};
-
 // 请求报文
 class Request{
 private:
@@ -65,8 +54,34 @@ private:
     // 请求体
     string _data;
 
+// 对外提供工具类 API 接口
 public:
+    /*
+     * 功能 : 解析post请求体数据
+     * post种类 : application/x-www-form-urlencoded
+     * data : 请求体
+     * ret  : 解析结果
+     */
+    static bool post_extract(const string& data,
+                             unordered_map<string, string>& ret);
+
+    /*
+     * 功能 : 解析post请求体数据
+     * post种类 : multipart/form-data
+     * content_type : content-type header
+     * data : 请求体
+     * ret  : 解析结果
+     */
+    static bool post_extract(const string& content_type,
+                             const string& data,
+                             unordered_map<string, string>& ret);
+
     void extract_request(const string& request);
+
+    /*
+     * 功能 ：生成请求报文文本
+     */
+    string to_string();
 
 protected:
     void extract_header(const string& headers, const string& key, string& value);

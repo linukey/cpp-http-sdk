@@ -6,6 +6,9 @@
 #ifndef __LINUKEY_WEBSERVER_H__
 #define __LINUKEY_WEBSERVER_H__
 
+#include "request.h"
+#include "http_common.h"
+
 #include <iostream>
 #include <fstream>
 #include <set>
@@ -18,11 +21,13 @@
 #include <memory>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
-#include "request.h"
 
 using std::shared_ptr;
 using std::string;
+using std::map;
 using linukey::webserver::request::Request;
+
+using namespace linukey::webserver::http_common;
 
 namespace linukey{  
 namespace webserver{
@@ -36,14 +41,17 @@ public:
     boost::asio::io_service SERVICE;
     boost::asio::ip::tcp::acceptor ACCEPTOR;
 
-    // 响应
-    void response(shared_socket sock, std::string message);
+    // 响应 (默认)
+    void response(shared_socket sock, const string& message);
+
+    // 响应 (自定义header)
+    void response(shared_socket sock, const string& header, const string& message);
 
     // 启动
     void run();
 
     // 加载配置文件
-    static bool read_conf(const std::string& file_path, std::map<std::string, std::string>& g_conf);
+    static bool read_conf(const string& file_path, map<string, string>& g_conf);
 
 private:
     void accept();

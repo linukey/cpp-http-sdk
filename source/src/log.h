@@ -34,8 +34,8 @@ const std::vector<string> LOG_LEVEL_STR
     "FATAL"
 };
 
-const string positive_log_file="mysql.log";
-const string negative_log_file="mysql.log.wf";
+const string positive_log_file="webserver.log";
+const string negative_log_file="webserver.log.wf";
 
 void msnprintf(string& buffer, string pattern){}
 template <class T, class ...Args>

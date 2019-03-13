@@ -2,37 +2,30 @@
 #define __LINUKEY_HTTP_COMMON_H__
 
 #include <iostream>
-#include <unordered_map>
+#include <vector>
 
 using std::string;
-using std::unordered_map;
+using std::vector;
 
 namespace linukey {
 namespace webserver {
 namespace http_common {
 
-class HttpCommon {
+static const string CRLF = "\r\n";
+static const string SPACE = " ";
 
-public:
+// 请求头
+enum HEADERS{
+    CONTENT_LENGTH = 0,
+    CONTENT_TYPE,
+    HOST,
+    HEADER_NUMS
+};
 
-/*
- * post种类 : application/x-www-form-urlencoded
- * data : 请求体
- * ret  : 解析结果
- */
-static bool post_extract(const string& data,
-                         unordered_map<string, string>& ret);
-
-/*
- * post种类 : multipart/form-data
- * content_type : content-type header
- * data : 请求体
- * ret  : 解析结果
- */
-static bool post_extract(const string& content_type,
-                         const string& data,
-                         unordered_map<string, string>& ret);
-
+static vector<string> HEADERS_STR = {
+    "content-length",  
+    "content-type",
+    "host"
 };
 
 }

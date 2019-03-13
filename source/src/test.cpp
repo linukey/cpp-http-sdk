@@ -2,11 +2,11 @@
 #include <unordered_map>
 #include <fstream>
 #include <vector>
-#include "http_common.h"
+#include "request.h"
 #include "utils/file_utils.h"
 
-using linukey::webserver::http_common::HttpCommon;
 using namespace linukey::webserver::utils;
+using namespace linukey::webserver::request;
 using namespace std;
 
 int main() {
@@ -15,7 +15,7 @@ int main() {
 
     string data = read_all("1");
 
-    HttpCommon::post_extract(content_type, data, m);
+    Request::post_extract(content_type, data, m);
 
     return 0;
 }
