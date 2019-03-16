@@ -36,8 +36,8 @@ string LowerString(const string& str){
 // 不改变之前字符串
 string Trim(string s) {
     if (s.empty()) { return s; }
-    s.erase(0,s.find_first_not_of(" "));
-    s.erase(s.find_last_not_of(" ") + 1);
+    s.erase(0,s.find_first_not_of(" \n\r\t"));
+    s.erase(s.find_last_not_of(" \n\r\t")+1);
     return s;
 }
 

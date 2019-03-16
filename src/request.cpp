@@ -37,13 +37,16 @@ bool Request::post_extract(const string& content_type, const string& data, unord
     if (st.size() != 2) { return false; }
 
     string boundary = st[1];
+    boundary = "--" + boundary;
     st = SplitString(data, boundary);
 
     // split by boundary
     for (const auto& i : st) {
         // split by /r/n/r/n
         vector<string> i_ret = SplitString(i, "\r\n\r\n");
-        for (const auto& j : i_ret) {
+        //for (const auto& j : i_ret) {
+        for (int l = 0; l < i_ret.size()-1; ++l) {
+            const auto &j = i_ret[l];
             // split by \r\n
             vector<string> j_ret = SplitString(j, "\r\n");
             for (const auto& k : j_ret) {
@@ -63,7 +66,7 @@ bool Request::post_extract(const string& content_type, const string& data, unord
 
                         ret[key] = val;
                         if (key == "name") {
-                            ret[val] = i_ret.back();
+                            ret[val] = Trim(i_ret.back());
                         }
                     }
                 }
