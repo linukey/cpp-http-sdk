@@ -3,17 +3,16 @@
     time: 2017.11.12
 */
 
-#include "lib/include/webserver.h"
+#include "../src/webserver.h"
 #include <iostream>
-#include <unordered_map>
+#include <map>
 #include <fstream>
 #include <memory>
 
 using namespace std;
 using namespace linukey::webserver;
-using namespace linukey::webserver::http;
 
-unordered_map<string, string> g_conf;
+map<string, string> g_conf;
 
 string read_file(fstream& fin) {
     string first_line;
@@ -41,7 +40,7 @@ public:
 
     // 实现自己的业务路由
     void router(shared_ptr<Request> req, shared_socket sock) override {
-        if (req->url == "/") {
+        if (req->getUrl() == "/") {
             fstream fout("html/index.html");
             if (fout.is_open()) {
                 string html = read_file(fout);
@@ -61,7 +60,7 @@ public:
  * 可以修改这个文件，来实现自己的业务路由
  */
 int main(){
-    if (!MyServer::read_conf("webserver.conf")) {
+    if (!MyServer::read_conf("webserver.conf", g_conf)) {
         cerr << "read conf fail!" << endl;
         return 0;
     }
