@@ -28,7 +28,8 @@ void Response::setStatusDescribe(const string& status_describe) {
 }
 
 void Response::setHeader(const string& key, const string& val) {
-    _headers[key] = val;
+    string tmp_key = boost::algorithm::to_lower_copy(key);
+    _headers[tmp_key] = val;
 }
 
 void Response::setData(const string& data) {
@@ -48,7 +49,8 @@ const string& Response::getStatusDescribe() const {
 }
 
 const string& Response::getHeader(const string& key) {
-    return _headers[key];
+    string tmp_key = boost::algorithm::to_lower_copy(key);
+    return _headers[tmp_key];
 }
 
 const string& Response::getData() const {

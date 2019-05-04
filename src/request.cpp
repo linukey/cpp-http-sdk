@@ -143,7 +143,8 @@ void Request::setProtocol(const string& protocol) {
 }
 
 void Request::setHeader(const string& key, const string& val) { 
-    _headers[key] = val; 
+    string tmp_key = boost::algorithm::to_lower_copy(key);
+    _headers[tmp_key] = val; 
 }
 
 void Request::setData(const string& data) { 
@@ -163,7 +164,8 @@ const string& Request::getProtocol() const {
 }
 
 const string& Request::getHeader(const string& key) { 
-    return _headers[key]; 
+    string tmp_key = boost::algorithm::to_lower_copy(key);
+    return _headers[tmp_key]; 
 }
 
 const string& Request::getData() const { 

@@ -19,13 +19,25 @@ enum HEADERS{
     CONTENT_LENGTH = 0,
     CONTENT_TYPE,
     HOST,
+    USER_AGENT,
+    ACCEPT,
+    ACCEPT_ENCODING,
+    ACCEPT_LANGUAGE,
+    CONNECTION,
+    TRANSFER_ENCODING,
     HEADER_NUMS
 };
 
 static vector<string> HEADERS_STR = {
     "content-length",  
     "content-type",
-    "host"
+    "host",
+    "user-agent",
+    "accept",
+    "accept-encoding",
+    "accept-language",
+    "connection",
+    "transfer-encoding"
 };
 
 }
