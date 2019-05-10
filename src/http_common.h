@@ -63,6 +63,8 @@ static void urldecode(const string& encd, string& decd) {
     }
 }
 
+static const string RESPONSE_SUCCESS_STATUS_LINE = "HTTP/1.1 200 OK\r\n";
+
 }
 }
 }

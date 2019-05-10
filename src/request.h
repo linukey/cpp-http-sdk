@@ -77,7 +77,10 @@ public:
                              const string& data,
                              unordered_map<string, string>& ret);
 
-    void extract_request(const string& request);
+    /*
+     * 解析请求报文
+     */
+    void extract_request(const string& request_message);
 
     /*
      * 功能 ：生成请求报文文本
@@ -85,8 +88,17 @@ public:
     string to_string();
 
 protected:
-    void extract_header(const string& headers, const string& key, string& value);
-    void extract_request_line(const string& headers, unordered_map<string, string>& result);
+    /*
+     * 从请求报文中解析headers
+     */
+    void extract_header(const string& request_message, const string& key, string& value);
+    /*
+     * 从请求报文中解析请求行
+     */
+    void extract_request_line(const string& request_message, unordered_map<string, string>& result);
+    /*
+     * 后处理url，去掉 协议后、host、参数、转小写
+     */
     void parse_url();
 
 public:
@@ -104,11 +116,6 @@ public:
     
     void printHeaders();
 };
-
-static const string HEADER = "HTTP/1.1 200 OK\r\n" \
-                             "Content-Type: text/html\r\n" \
-                             "Connection: close\r\n";
-                            //"Access-Control-Allow-Origin: *\r\n";
 
 }
 }

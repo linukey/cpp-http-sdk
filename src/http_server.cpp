@@ -57,12 +57,14 @@ size_t WebServer::read_complete(shared_ptr<Request> req, shared_ptr<char> buff, 
         return 0;
     }
 
+    // 读取完整的 请求行 + 请求头
     string request(buff.get(), size);
     size_t pos = request.find(CRLF + CRLF);
     if (pos == string::npos) {
         return true;
     }
 
+    // 根据 method 类型决定是否继续读取 请求体
     if (req->getMethod().empty()){
         req->extract_request(request);
         if (boost::algorithm::to_lower_copy(req->getMethod()) == "get") {
@@ -103,7 +105,7 @@ void WebServer::write_handle(const e_code& err){
 
 void WebServer::response_chunked(shared_socket sock, const string& message) {
     string message_ = message;
-    std::string response_str = HEADER + "Transfer-Encoding: chunked" + "\r\n\r\n";
+    std::string response_str = RESPONSE_SUCCESS_STATUS_LINE + "Transfer-Encoding: chunked" + "\r\n\r\n";
     while (message_.size() > 0) {
         if (message_.size() > 10000) {
             string block = message_.substr(0, 10000);
@@ -123,7 +125,7 @@ void WebServer::response_chunked(shared_socket sock, const string& message) {
 }
 
 void WebServer::response(shared_socket sock, const string& message) {
-    std::string header = HEADER + "Content-Length:" + std::to_string(message.size()) + "\r\n\r\n";
+    std::string header = RESPONSE_SUCCESS_STATUS_LINE + "Content-Length:" + std::to_string(message.size()) + "\r\n\r\n";
     sock->async_write_some(buffer(header + message), bind(&WebServer::write_handle, this, _1));
 }
 
@@ -145,8 +147,8 @@ bool WebServer::read_conf(const string& file_path, std::map<string, string>& g_c
         if (split_pos == string::npos) {
             return false;
         }
-        string key = line.substr(0, split_pos);
-        string value = line.substr(split_pos+1);
+        string key = boost::trim_copy(line.substr(0, split_pos));
+        string value = boost::trim_copy(line.substr(split_pos+1));
         g_conf[key] = value;
     }
     return true;

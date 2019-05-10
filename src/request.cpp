@@ -47,7 +47,6 @@ bool Request::post_extract(const string& content_type, const string& data, unord
         // split by /r/n/r/n
         vector<string> i_ret;
         boost::split(i_ret, i, boost::is_any_of("\r\n\r\n"));
-        //for (const auto& j : i_ret) {
         for (int l = 0; l < i_ret.size()-1; ++l) {
             const auto &j = i_ret[l];
             // split by \r\n
@@ -85,8 +84,8 @@ bool Request::post_extract(const string& content_type, const string& data, unord
 }
 
 
-void Request::extract_header(const string& headers, const string& key, string& value){
-    string result = boost::algorithm::to_lower_copy(headers);
+void Request::extract_header(const string& request_message, const string& key, string& value){
+    string result = boost::algorithm::to_lower_copy(request_message);
     size_t spos = result.find(key);
     if (spos == string::npos) {
         return;
@@ -109,12 +108,12 @@ void Request::extract_header(const string& headers, const string& key, string& v
     value = strs[1];
 }
 
-void Request::extract_request_line(const string& headers, unordered_map<string, string>& result){
-    size_t pos = headers.find("\r\n");
+void Request::extract_request_line(const string& request_message, unordered_map<string, string>& result){
+    size_t pos = request_message.find("\r\n");
     if (pos == string::npos) {
         return;
     }
-    string req_line = headers.substr(0, pos);
+    string req_line = request_message.substr(0, pos);
     vector<string> strs;
     boost::split(strs, req_line, boost::is_any_of(" "));
     result["method"] = strs[0];
@@ -137,11 +136,12 @@ void Request::extract_request(const string& request){
         string key = HEADERS_STR[i];
         string val;
         extract_header(request, key, val);
-        _headers[key] =  val;
+        _headers[key] = val;
     }
 }
 
 void Request::parse_url() {
+    // 去掉协议头
     size_t pos = _url.find("http://");
     if (pos == 0) {
         _url = _url.substr(7);
@@ -151,14 +151,19 @@ void Request::parse_url() {
         _url = _url.substr(8);
     }
 
+    // 去掉host
     pos = _url.find("/");
     _url = _url.substr(pos);
 
+    // 去掉参数
     pos = _url.find("?");
     if (pos != string::npos) {
         _data = _url.substr(pos+1);
         _url = _url.substr(0, pos);
     }
+
+    // 转小写
+    boost::to_lower(_url);
 }
 
 void Request::setMethod(const string& method) { 

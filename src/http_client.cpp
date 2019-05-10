@@ -99,16 +99,8 @@ bool WebClient::parse_response_line(const string& response_line,
 }
 
 template <class T>
-Response WebClient::parse_response_message(T& socket,
-                                           const string& url,
-                                           const string& method,
-                                           const string& host,
-                                           const string& data,
-                                           std::map<string, string>* headers) {
+Response WebClient::parse_response_message(T& socket, Request& request) {
     try {
-        // 设置请求报文
-        Request request = build_request_message(url, method, host, data, headers);
-
         // 发送请求
         socket.write_some(boost::asio::buffer(request.to_string()));
 
@@ -189,8 +181,6 @@ Response WebClient::parse_response_message(T& socket,
         LOGOUT(webserver::log::FATAL, "%", e.what());
         return Response();
     }
-
-    return Response();
 }
 
 Response WebClient::http_request(const string& url,
@@ -198,6 +188,8 @@ Response WebClient::http_request(const string& url,
                                  std::map<string, string>* headers,
                                  const string& data) {
     string protocol, host, port;
+
+    // 解析 协议头、host、port
     extract_host_port(url, protocol, host, port);
 
     if (host.empty() || protocol.empty()) {
@@ -205,13 +197,19 @@ Response WebClient::http_request(const string& url,
         return Response();
     }
 
+    // 只支持 http、https 协议
     if (protocol != "http" && protocol != "https") {
         LOGOUT(webserver::log::FATAL, "protocol % error, only support http and https!", protocol);
         return Response();
     }
 
+    // 设置请求报文
+    Request request = build_request_message(url, method, host, data, headers);
+
     try {
         boost::asio::io_context io_context;
+
+        // 根据 hostname 查询 ip 地址
         tcp::resolver resolver(io_context);
         tcp::resolver::results_type endpoints = resolver.resolve(host, protocol);
         boost::asio::ip::tcp::endpoint endpoint;
@@ -223,23 +221,26 @@ Response WebClient::http_request(const string& url,
             }
         }
 
+        // 如果没有查询到有效 ip 地址，直接写入请求的 ip 地址以及 port
         if (endpoint.address().to_string() == "0.0.0.0") {
             boost::asio::ip::address ad = boost::asio::ip::address::from_string(host);
             endpoint = boost::asio::ip::tcp::endpoint(ad, stoi(port));
         }
 
+        // https
         if (protocol == "https") {
             boost::asio::ssl::context ctx(boost::asio::ssl::context::sslv23);
             boost::asio::ssl::stream<tcp::socket> socket(io_context, ctx);
             socket.set_verify_mode(boost::asio::ssl::verify_none);
             socket.lowest_layer().connect(endpoint);
             socket.handshake(boost::asio::ssl::stream_base::client);
-            return parse_response_message(socket, url, method, host, data, headers);
+            return parse_response_message(socket, request);
 
+        // http
         } else if (protocol == "http") {
             tcp::socket socket(io_context);
             socket.connect(endpoint);
-            return parse_response_message(socket, url, method, host, data, headers);
+            return parse_response_message(socket, request);
         }
 
         return Response();

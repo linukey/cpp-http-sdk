@@ -12,6 +12,7 @@
 #include "request.h"
 
 using linukey::webserver::response::Response;
+using linukey::webserver::request::Request;
 
 namespace linukey {
 namespace webclient {
@@ -33,7 +34,6 @@ public:
                           const std::string& method,
                           std::map<string, string>* headers,
                           const std::string& data);
-
 private:
     /*
      * func : 从url中提取host
@@ -42,28 +42,21 @@ private:
                            std::string& protocol,
                            std::string& host,
                            std::string& port);
-
     /*
      * 解析响应报文
      */
     template <class T>
     Response parse_response_message(T& socket,
-                                    const std::string& url,
-                                    const std::string& method,
-                                    const std::string& host,
-                                    const std::string& data,
-                                    std::map<std::string, std::string>* headers);
-
+                                    Request& request);
     /*
      * 构建请求报文
      */
-    linukey::webserver::request::Request build_request_message(const std::string& url,
-                                                               const std::string& method,
-                                                               const std::string& host,
-                                                               const std::string& data,
-                                                               std::map<std::string,
-                                                               std::string>* headers);
-
+    Request build_request_message(const std::string& url,
+                                  const std::string& method,
+                                  const std::string& host,
+                                  const std::string& data,
+                                  std::map<std::string,
+                                  std::string>* headers);
     /*
      * 解析响应报文状态行
      */
