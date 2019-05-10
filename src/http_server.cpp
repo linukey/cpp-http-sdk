@@ -125,7 +125,7 @@ void WebServer::response_chunked(shared_ptr<Request> req, shared_socket sock, co
 }
 
 void WebServer::response(shared_ptr<Request> req, shared_socket sock, const string& message) {
-    if (boost::to_lower_copy(req->getHeader("content-encoding")).find("gzip") != string::npos) {
+    if (boost::to_lower_copy(req->getHeader("Accept-Encoding")).find("gzip") != string::npos) {
         std::string compress_message = gzip_compress(message);
         std::string header = RESPONSE_SUCCESS_STATUS_LINE; 
         header += "Content-Length:" + std::to_string(compress_message.size()) + "\r\n";

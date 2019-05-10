@@ -12,7 +12,7 @@ int main () {
     WebClient webclient;
 
     map<string, string> headers;
-    headers["Content-Encoding"] = "gzip";
+    headers["Accept-Encoding"] = "gzip";
 
     cout << webclient.http_request(url, "GET", &headers, "").to_string() << endl;
     
