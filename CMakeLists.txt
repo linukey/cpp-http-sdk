@@ -9,10 +9,9 @@ LINK_DIRECTORIES(/usr/local/lib /usr/local/opt/openssl@1.1/lib)
 project (HttpServer)
 
 aux_source_directory(src DIR_SRCS)
-ADD_SUBDIRECTORY(src/utils)
 
 add_library(httpserver ${DIR_SRCS})
-target_link_libraries(httpserver httpserver-utils boost_system ssl crypto pthread)
+target_link_libraries(httpserver boost_system ssl crypto pthread)
 
 add_executable(run_server example/server_test.cpp)
 target_link_libraries(run_server httpserver gumbo)
