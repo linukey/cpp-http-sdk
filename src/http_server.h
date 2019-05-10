@@ -42,13 +42,13 @@ public:
     boost::asio::ip::tcp::acceptor ACCEPTOR;
 
     // 响应 (默认)
-    void response(shared_socket sock, const string& message);
+    void response(shared_ptr<Request> req, shared_socket sock, const string& message);
 
     // 响应 (自定义header)
-    void response(shared_socket sock, const string& header, const string& message);
+    void response(shared_ptr<Request> req, shared_socket sock, const string& header, const string& message);
 
     // 响应 (chunked)
-    void response_chunked(shared_socket sock, const string& message);
+    void response_chunked(shared_ptr<Request> req, shared_socket sock, const string& message);
 
     // 启动
     void run();

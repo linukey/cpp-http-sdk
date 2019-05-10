@@ -70,11 +70,11 @@ size_t WebServer::read_complete(shared_ptr<Request> req, shared_ptr<char> buff, 
         if (boost::algorithm::to_lower_copy(req->getMethod()) == "get") {
             return false;
         } else if (boost::algorithm::to_lower_copy(req->getMethod()) == "post") {
-            return stoi(req->getHeader(HEADERS_STR[CONTENT_LENGTH])) != 0;
+            return stoi(req->getHeader("content-length")) != 0;
         }
     } else {
         string data = request.substr(pos + 4);    
-        int content_length = stoi(req->getHeader(HEADERS_STR[CONTENT_LENGTH]));
+        int content_length = stoi(req->getHeader("content-length"));
         if (int(data.size()) == content_length) {
             req->setData(data);
             return false;
@@ -90,7 +90,7 @@ void WebServer::read_handle(shared_ptr<Request> req, shared_socket sock, const e
         return;
     }
 
-    LOGOUT(INFO, "% request % ...", req->getHeader(HEADERS_STR[HOST]), req->getUrl());
+    LOGOUT(INFO, "% request % ...", req->getHeader("host"), req->getUrl());
 
     router(req, sock);
     sock->close();
@@ -103,7 +103,7 @@ void WebServer::write_handle(const e_code& err){
     }
 }
 
-void WebServer::response_chunked(shared_socket sock, const string& message) {
+void WebServer::response_chunked(shared_ptr<Request> req, shared_socket sock, const string& message) {
     string message_ = message;
     std::string response_str = RESPONSE_SUCCESS_STATUS_LINE + "Transfer-Encoding: chunked" + "\r\n\r\n";
     while (message_.size() > 0) {
@@ -124,12 +124,21 @@ void WebServer::response_chunked(shared_socket sock, const string& message) {
     sock->async_write_some(buffer(response_str), bind(&WebServer::write_handle, this, _1));
 }
 
-void WebServer::response(shared_socket sock, const string& message) {
-    std::string header = RESPONSE_SUCCESS_STATUS_LINE + "Content-Length:" + std::to_string(message.size()) + "\r\n\r\n";
-    sock->async_write_some(buffer(header + message), bind(&WebServer::write_handle, this, _1));
+void WebServer::response(shared_ptr<Request> req, shared_socket sock, const string& message) {
+    if (boost::to_lower_copy(req->getHeader("content-encoding")).find("gzip") != string::npos) {
+        std::string compress_message = gzip_compress(message);
+        std::string header = RESPONSE_SUCCESS_STATUS_LINE; 
+        header += "Content-Length:" + std::to_string(compress_message.size()) + "\r\n";
+        header += "Content-Encoding:gzip\r\n"; 
+        header += "\r\n";
+        sock->async_write_some(buffer(header + compress_message), bind(&WebServer::write_handle, this, _1));
+    } else {
+        std::string header = RESPONSE_SUCCESS_STATUS_LINE + "Content-Length:" + std::to_string(message.size()) + "\r\n\r\n";
+        sock->async_write_some(buffer(header + message), bind(&WebServer::write_handle, this, _1));
+    }
 }
 
-void WebServer::response(shared_socket sock, const string& header, const string& message) {
+void WebServer::response(shared_ptr<Request> req, shared_socket sock, const string& header, const string& message) {
     sock->async_write_some(buffer(header + message), bind(&WebServer::write_handle, this, _1));
 }
 

@@ -10,6 +10,7 @@
 #include <boost/bind.hpp>
 
 #include "log.h"
+#include "utils.h"
 #include "request.h"
 
 using boost::asio::ip::tcp;
@@ -174,6 +175,13 @@ Response WebClient::parse_response_message(T& socket, Request& request) {
                     break;
                 }
             }
+        }
+
+        // 如果是gzip，解压
+        if (boost::to_lower_copy(response.getHeader("Content-Encoding")) == "gzip") {
+            string data = response.getData();
+            string decompress_data = linukey::webserver::utils::gzip_decompress(data);
+            response.setData(decompress_data);
         }
 
         return response;

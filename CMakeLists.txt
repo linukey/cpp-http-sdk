@@ -11,7 +11,7 @@ project (HttpServer)
 aux_source_directory(src DIR_SRCS)
 
 add_library(httpserver ${DIR_SRCS})
-target_link_libraries(httpserver boost_system ssl crypto pthread)
+target_link_libraries(httpserver boost_system boost_iostreams ssl crypto pthread)
 
 add_executable(run_server example/server_test.cpp)
 target_link_libraries(run_server httpserver gumbo)

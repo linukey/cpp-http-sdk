@@ -132,8 +132,7 @@ void Request::extract_request(const string& request){
 
     parse_url();
 
-    for (int i = CONTENT_LENGTH; i <HEADER_NUMS; ++i) {
-        string key = HEADERS_STR[i];
+    for (const auto& key : HEADERS) {
         string val;
         extract_header(request, key, val);
         _headers[key] = val;
