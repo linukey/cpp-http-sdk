@@ -14,7 +14,7 @@ namespace linukey {
 namespace webserver {
 namespace utils {
 
-std::string read_all(const std::string& filename);
+void file_read_all(const std::string& filename, std::string& buffer);
 
 }
 }

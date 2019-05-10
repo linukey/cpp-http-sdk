@@ -7,7 +7,7 @@
 #include "http_server.h"
 #include "request.h"
 #include "log.h"
-#include "http_utils.h"
+#include "utils.h"
 #include "http_common.h"
 
 using namespace boost::asio;
