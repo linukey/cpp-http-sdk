@@ -1,7 +1,6 @@
 #ifndef __LINUKEY_WEBSERVER_RESPONSE__
 #define __LINUKEY_WEBSERVER_RESPONSE__
 
-#include "utils/string_utils.h"
 #include "http_common.h"
 
 #include <boost/algorithm/string.hpp>

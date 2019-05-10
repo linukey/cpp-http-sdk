@@ -3,10 +3,10 @@
     time: 2017.11.12
 */
 
-#include "webserver.h"
+#include <boost/algorithm/string.hpp>
+#include "http_server.h"
 #include "request.h"
 #include "log.h"
-#include "utils/string_utils.h"
 #include "utils/file_utils.h"
 #include "http_common.h"
 
@@ -65,9 +65,9 @@ size_t WebServer::read_complete(shared_ptr<Request> req, shared_ptr<char> buff, 
 
     if (req->getMethod().empty()){
         req->extract_request(request);
-        if (LowerString(req->getMethod()) == "get") {
+        if (boost::algorithm::to_lower_copy(req->getMethod()) == "get") {
             return false;
-        } else if (LowerString(req->getMethod()) == "post") {
+        } else if (boost::algorithm::to_lower_copy(req->getMethod()) == "post") {
             return stoi(req->getHeader(HEADERS_STR[CONTENT_LENGTH])) != 0;
         }
     } else {

@@ -5,8 +5,6 @@
 
 #include "request.h"
 
-using namespace linukey::webserver::utils;
-
 namespace linukey{  
 namespace webserver{    
 namespace request{
@@ -23,9 +21,11 @@ string Request::to_string() {
 }
 
 bool Request::post_extract(const string& data, unordered_map<string, string>& ret) {
-    vector<string> lines = SplitString(data, "&");
+    vector<string> lines;
+    boost::split(lines, data, boost::is_any_of("&"));
     for (const auto& line : lines) {
-        vector<string> kv = SplitString(line, "=");
+        vector<string> kv;
+        boost::split(kv, line, boost::is_any_of("="));
         ret[kv[0]] = kv[1];
     }
 
@@ -33,40 +33,47 @@ bool Request::post_extract(const string& data, unordered_map<string, string>& re
 }
 
 bool Request::post_extract(const string& content_type, const string& data, unordered_map<string, string>& ret) {
-    vector<string> st = SplitString(content_type, "=");
+    vector<string> st;
+    boost::split(st, content_type, boost::is_any_of("="));
     if (st.size() != 2) { return false; }
 
     string boundary = st[1];
     boundary = "--" + boundary;
-    st = SplitString(data, boundary);
+    st.clear();
+    boost::split(st, data, boost::is_any_of(boundary));
 
     // split by boundary
     for (const auto& i : st) {
         // split by /r/n/r/n
-        vector<string> i_ret = SplitString(i, "\r\n\r\n");
+        vector<string> i_ret;
+        boost::split(i_ret, i, boost::is_any_of("\r\n\r\n"));
         //for (const auto& j : i_ret) {
         for (int l = 0; l < i_ret.size()-1; ++l) {
             const auto &j = i_ret[l];
             // split by \r\n
-            vector<string> j_ret = SplitString(j, "\r\n");
+            vector<string> j_ret;
+            boost::split(j_ret, j, boost::is_any_of("\r\n"));
             for (const auto& k : j_ret) {
                 // split by ;
-                vector<string> k_ret = SplitString(k, ";");
+                vector<string> k_ret;
+                boost::split(k_ret, k, boost::is_any_of(";"));
                 for (const auto& m : k_ret) {
-                    vector<string> r = SplitString(m, ":");
+                    vector<string> r;
+                    boost::split(r, m, boost::is_any_of(":"));
                     if (r.size() == 1) {
-                        r = SplitString(m, "=");
+                        r.clear();
+                        boost::split(r, m, boost::is_any_of("="));
                     }
                     if (r.size() != 1) {
-                        string key = Trim(r[0]);
-                        string val = Trim(r[1]);
+                        string key = boost::trim_copy(r[0]);
+                        string val = boost::trim_copy(r[1]);
                         
                         val.erase(0,val.find_first_not_of("\""));
                         val.erase(val.find_last_not_of("\"") + 1);
 
                         ret[key] = val;
                         if (key == "name") {
-                            ret[val] = Trim(i_ret.back());
+                            ret[val] = boost::trim_copy(i_ret.back());
                         }
                     }
                 }
@@ -79,7 +86,7 @@ bool Request::post_extract(const string& content_type, const string& data, unord
 
 
 void Request::extract_header(const string& headers, const string& key, string& value){
-    string result = LowerString(headers);
+    string result = boost::algorithm::to_lower_copy(headers);
     size_t spos = result.find(key);
     if (spos == string::npos) {
         return;
@@ -97,7 +104,8 @@ void Request::extract_header(const string& headers, const string& key, string& v
         kv.erase(pos, 1);    
     }
 
-    vector<string> strs = SplitString(kv, ":");
+    vector<string> strs;
+    boost::split(strs, kv, boost::is_any_of(":"));
     value = strs[1];
 }
 
@@ -107,7 +115,8 @@ void Request::extract_request_line(const string& headers, unordered_map<string, 
         return;
     }
     string req_line = headers.substr(0, pos);
-    vector<string> strs = SplitString(req_line, " ");
+    vector<string> strs;
+    boost::split(strs, req_line, boost::is_any_of(" "));
     result["method"] = strs[0];
     result["url"] = strs[1];
     result["protocol"] = strs[2];

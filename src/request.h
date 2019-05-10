@@ -6,10 +6,10 @@
 #ifndef __LINUKEY_WEBSERVER_REQUEST__
 #define __LINUKEY_WEBSERVER_REQUEST__
 
-#include "utils/string_utils.h"
 #include "http_common.h"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <iostream>
 #include <fstream>
 #include <string>
