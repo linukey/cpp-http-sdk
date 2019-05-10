@@ -87,6 +87,7 @@ public:
 protected:
     void extract_header(const string& headers, const string& key, string& value);
     void extract_request_line(const string& headers, unordered_map<string, string>& result);
+    void parse_url();
 
 public:
     void setMethod(const string& method);
@@ -105,9 +106,9 @@ public:
 };
 
 static const string HEADER = "HTTP/1.1 200 OK\r\n" \
-                            "Connection: close\r\n" \
-                            "Access-Control-Allow-Origin: *\r\n" \
-                            "\r\n";
+                             "Content-Type: text/html\r\n" \
+                             "Connection: close\r\n";
+                            //"Access-Control-Allow-Origin: *\r\n";
 
 }
 }

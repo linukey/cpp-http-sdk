@@ -47,6 +47,9 @@ public:
     // 响应 (自定义header)
     void response(shared_socket sock, const string& header, const string& message);
 
+    // 响应 (chunked)
+    void response_chunked(shared_socket sock, const string& message);
+
     // 启动
     void run();
 

@@ -12,10 +12,10 @@ aux_source_directory(src DIR_SRCS)
 ADD_SUBDIRECTORY(src/utils)
 
 add_library(httpserver ${DIR_SRCS})
-target_link_libraries(httpserver httpserver-utils boost_system ssl crypto)
+target_link_libraries(httpserver httpserver-utils boost_system ssl crypto pthread)
 
-add_executable(run_server example/main.cpp)
-target_link_libraries(run_server httpserver)
+add_executable(run_server example/server_test.cpp)
+target_link_libraries(run_server httpserver gumbo)
 
 add_executable(client_test example/client_test.cpp)
 target_link_libraries(client_test httpserver)

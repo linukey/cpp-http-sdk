@@ -101,8 +101,30 @@ void WebServer::write_handle(const e_code& err){
     }
 }
 
+void WebServer::response_chunked(shared_socket sock, const string& message) {
+    string message_ = message;
+    std::string response_str = HEADER + "Transfer-Encoding: chunked" + "\r\n\r\n";
+    while (message_.size() > 0) {
+        if (message_.size() > 10000) {
+            string block = message_.substr(0, 10000);
+            message_ = message_.substr(10000);
+            response_str += "2710\r\n";
+            response_str += block + "\r\n";
+        } else {
+            char buffer[256];
+            sprintf(buffer, "%x", message_.size());
+            response_str += string(buffer) + "\r\n";
+            response_str += message_ + "\r\n";
+            message_.clear();
+        }
+    }
+    response_str += "0\r\n\r\n";
+    sock->async_write_some(buffer(response_str), bind(&WebServer::write_handle, this, _1));
+}
+
 void WebServer::response(shared_socket sock, const string& message) {
-    sock->async_write_some(buffer(HEADER + message), bind(&WebServer::write_handle, this, _1));
+    std::string header = HEADER + "Content-Length:" + std::to_string(message.size()) + "\r\n\r\n";
+    sock->async_write_some(buffer(header + message), bind(&WebServer::write_handle, this, _1));
 }
 
 void WebServer::response(shared_socket sock, const string& header, const string& message) {

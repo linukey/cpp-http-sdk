@@ -37,9 +37,9 @@ const std::vector<string> LOG_LEVEL_STR
 const string positive_log_file="webserver.log";
 const string negative_log_file="webserver.log.wf";
 
-void msnprintf(string& buffer, string pattern){}
+static void msnprintf(string& buffer, string pattern){}
 template <class T, class ...Args>
-void msnprintf(string& buffer, string pattern, T head, Args... rest) 
+static void msnprintf(string& buffer, string pattern, T head, Args... rest) 
 {
     size_t pos = pattern.find("%");
     while (pos != string::npos && pos-1 >= 0 && pattern[pos-1] == '\\') {

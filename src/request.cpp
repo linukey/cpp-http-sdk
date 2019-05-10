@@ -122,11 +122,33 @@ void Request::extract_request(const string& request){
     _url = req_line["url"];
     _protocol = req_line["protocol"];
 
+    parse_url();
+
     for (int i = CONTENT_LENGTH; i <HEADER_NUMS; ++i) {
         string key = HEADERS_STR[i];
         string val;
         extract_header(request, key, val);
         _headers[key] =  val;
+    }
+}
+
+void Request::parse_url() {
+    size_t pos = _url.find("http://");
+    if (pos == 0) {
+        _url = _url.substr(7);
+    }
+    pos = _url.find("https://");
+    if (pos == 0) {
+        _url = _url.substr(8);
+    }
+
+    pos = _url.find("/");
+    _url = _url.substr(pos);
+
+    pos = _url.find("?");
+    if (pos != string::npos) {
+        _data = _url.substr(pos+1);
+        _url = _url.substr(0, pos);
     }
 }
 
