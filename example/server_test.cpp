@@ -39,18 +39,18 @@ public:
         WebServer(buffer_size, port) {}
 
     // 实现自己的业务路由
-    void router(shared_ptr<Request> req, shared_socket sock) override {
-        if (req->getUrl() == "/") {
+    void router(shared_ptr<Connection> conn) override {
+        if (conn->request->getUrl() == "/") {
             fstream fout("html/index.html");
             if (fout.is_open()) {
                 string html = read_file(fout);
-                response(sock, html);
+                response(conn, html);
                 fout.close();
             }
             return;
         }
 
-        response(sock, "404");
+        response(conn, "404");
     }
 };
 

@@ -126,6 +126,8 @@ Response WebClient::parse_response_message(T& socket, Request& request) {
             response.setHeader(key, value);
         }
 
+        // 接收包体
+        string& response_body = response.setData();
         // chunked 方式
         if (response.getHeader("content-length").empty()) {
             if (response.getHeader("transfer-encoding") != "chunked") {
@@ -133,55 +135,61 @@ Response WebClient::parse_response_message(T& socket, Request& request) {
                 return Response();
             }
 
-            string chunked_body;
-            boost::system::error_code ec;
-            while (true) {
-                boost::asio::read(socket, response_streambuf, boost::asio::transfer_at_least(1), ec);
-                if (ec == boost::asio::error::eof) {
-                    boost::asio::streambuf::const_buffers_type cbt = response_streambuf.data();
-                    chunked_body = string(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
-                    if (chunked_body.find("0\r\n\r\n") != string::npos) {
-                        break;
-                    } else {
-                        LOGOUT(webserver::log::FATAL, "%:%:%", __FILE__, __LINE__, "error");
-                        return Response();
-                    }
-                }
-            }
-            string response_body;
+            int cur = 0, len = 0;
+            size_t pos = string::npos;
 
-            int cur = 0;
+            boost::asio::streambuf::const_buffers_type cbt = response_streambuf.data();
+            string chunked_body(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
+            response_streambuf.consume(chunked_body.size());
+
             while (true) {
-                size_t pos = chunked_body.find("\r\n", cur);
-                if (pos == string::npos) { break; }
+                while ((pos = chunked_body.find("\r\n", cur)) == string::npos) {
+                    boost::asio::read_until(socket, response_streambuf, "\r\n");
+                    boost::asio::streambuf::const_buffers_type cbt = response_streambuf.data();
+                    string read_str(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
+                    chunked_body += read_str;
+                    response_streambuf.consume(read_str.size());
+                }
                 std::stringstream ss;
                 ss << std::hex << chunked_body.substr(cur, pos-cur);
-                int len;
                 ss >> len;
                 cur = cur + (pos-cur) + 2;
-                response_body += chunked_body.substr(cur, len);
-                cur = cur + 2 + len;
-            }
-            response.setData(response_body);
-        // content-length 方式
-        } else {
-            int body_len = stoi(response.getHeader("content-length"));
-            while (true) {
-                boost::asio::read(socket, response_streambuf, boost::asio::transfer_at_least(1));
-                if (response_streambuf.size() == body_len) {
+                while (chunked_body.size()-cur < len+2) {
+                    int need_len = len + 2 - chunked_body.size() + cur;
+                    boost::asio::read(socket, response_streambuf, boost::asio::transfer_at_least(need_len));
                     boost::asio::streambuf::const_buffers_type cbt = response_streambuf.data();
-                    string data(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
-                    response.setData(data);
+                    string read_str(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
+                    chunked_body += read_str;
+                    response_streambuf.consume(read_str.size());
+                }
+                response_body += chunked_body.substr(cur, len);
+                if (len == 0) {
                     break;
                 }
+                cur = cur + 2 + len;
             }
+
+        // content-length 方式
+        } else {
+            int content_length = stoi(response.getHeader("content-length"));
+            boost::asio::streambuf::const_buffers_type cbt = response_streambuf.data();
+            string first(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
+            response_body += first;
+            response_streambuf.consume(first.size());
+
+            boost::asio::read(socket, response_streambuf, boost::asio::transfer_at_least(content_length - first.size()));
+
+            cbt = response_streambuf.data();
+            string rest(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
+            response_body += rest;
+            response_streambuf.consume(rest.size());
         }
 
         // 如果是gzip，解压
         if (boost::to_lower_copy(response.getHeader("Content-Encoding")) == "gzip") {
             string data = response.getData();
-            string decompress_data = linukey::webserver::utils::gzip_decompress(data);
-            response.setData(decompress_data);
+            string& decompress_data = response.setData();
+            linukey::webserver::utils::gzip_decompress(data, decompress_data);
         }
 
         return response;

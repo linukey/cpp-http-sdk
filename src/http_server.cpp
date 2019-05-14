@@ -16,10 +16,16 @@ using namespace linukey::webserver::request;
 using namespace linukey::webserver::log;
 using namespace linukey::webserver::utils;
 using namespace linukey::webserver::http_common;
+using boost::asio::ip::tcp;
 
 WebServer::WebServer(int buffer_size, int port) : 
-    ACCEPTOR(SERVICE, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
-    buffer_size(buffer_size) {
+                                                ACCEPTOR(SERVICE),
+                                                buffer_size(buffer_size) {
+    boost::asio::ip::tcp::endpoint ep(boost::asio::ip::tcp::v4(), port);
+    ACCEPTOR.open(ep.protocol());
+    ACCEPTOR.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
+    ACCEPTOR.bind(ep);
+    ACCEPTOR.listen();
 }
 
 void WebServer::run(){    
@@ -29,54 +35,51 @@ void WebServer::run(){
 }
 
 void WebServer::accept() {
-    shared_socket sock(new ip::tcp::socket(SERVICE));
-    ACCEPTOR.async_accept(*sock, boost::bind(&WebServer::accept_handle, this, sock, _1));
+    shared_ptr<Connection> conn(new Connection(SERVICE, buffer_size));
+    ACCEPTOR.async_accept(*conn->sock, boost::bind(&WebServer::accept_handle, this, conn, _1));
 }
 
-void WebServer::accept_handle(shared_socket sock, const e_code& err){
+void WebServer::accept_handle(shared_ptr<Connection> conn, const e_code& err){
     if (err){
         LOGOUT(FATAL, "%", "accept fatal");
         return;
     }
 
-    shared_ptr<char> buff(new char[buffer_size]);
-    shared_ptr<Request> req(new Request());
-
-    async_read(*sock, 
-               buffer(buff.get(), buffer_size), 
-               bind(&WebServer::read_complete, this, req, buff, _1, _2),
-               bind(&WebServer::read_handle, this, req, sock, _1));
+    async_read(*conn->sock, 
+               buffer(conn->request_buffer, buffer_size), 
+               bind(&WebServer::read_complete, this, conn, _1, _2),
+               bind(&WebServer::read_handle, this, conn, _1, _2));
 
     accept();
 }
 
 // 逐个字节的读
-size_t WebServer::read_complete(shared_ptr<Request> req, shared_ptr<char> buff, const e_code& err, size_t size){
+size_t WebServer::read_complete(shared_ptr<Connection> conn, const e_code& err, size_t size){
     if (err) {
         LOGOUT(FATAL, "%", "receive request error");
         return 0;
     }
 
     // 读取完整的 请求行 + 请求头
-    string request(buff.get(), size);
+    string request(conn->request_buffer, size);
     size_t pos = request.find(CRLF + CRLF);
     if (pos == string::npos) {
         return true;
     }
 
     // 根据 method 类型决定是否继续读取 请求体
-    if (req->getMethod().empty()){
-        req->extract_request(request);
-        if (boost::algorithm::to_lower_copy(req->getMethod()) == "get") {
+    if (conn->request->getMethod().empty()){
+        conn->request->extract_request(request);
+        if (boost::algorithm::to_lower_copy(conn->request->getMethod()) == "get") {
             return false;
-        } else if (boost::algorithm::to_lower_copy(req->getMethod()) == "post") {
-            return stoi(req->getHeader("content-length")) != 0;
+        } else if (boost::algorithm::to_lower_copy(conn->request->getMethod()) == "post") {
+            return stoi(conn->request->getHeader("content-length")) != 0;
         }
     } else {
-        string data = request.substr(pos + 4);    
-        int content_length = stoi(req->getHeader("content-length"));
-        if (int(data.size()) == content_length) {
-            req->setData(data);
+        string body = request.substr(pos + 4);    
+        int content_length = stoi(conn->request->getHeader("content-length"));
+        if (int(body.size()) == content_length) {
+            conn->request->setData(body);
             return false;
         }
     }
@@ -84,26 +87,31 @@ size_t WebServer::read_complete(shared_ptr<Request> req, shared_ptr<char> buff, 
     return true;
 }
 
-void WebServer::read_handle(shared_ptr<Request> req, shared_socket sock, const e_code& err){
+void WebServer::read_handle(shared_ptr<Connection> conn,
+                            const e_code& err,
+                            std::size_t bytes_transferred){
+    boost::asio::ip::tcp::endpoint endpoint = conn->sock->remote_endpoint();
     if (err){
         LOGOUT(ERROR, "%", "read handel error");
         return;
     }
 
-    LOGOUT(INFO, "% request % ...", req->getHeader("host"), req->getUrl());
+    LOGOUT(INFO, "% request % ...", conn->request->getHeader("host"), conn->request->getUrl());
 
-    router(req, sock);
-    sock->close();
+    router(conn);
 }
 
-void WebServer::write_handle(const e_code& err){
+void WebServer::write_handle(shared_ptr<Connection> conn,
+                             const e_code& err,
+                             std::size_t bytes_transferred){
     if (err){
         LOGOUT(ERROR, "%", "write handel error");
-        return;
     }
+    conn->sock->close();
 }
 
-void WebServer::response_chunked(shared_ptr<Request> req, shared_socket sock, const string& message) {
+/*
+void WebServer::response_chunked(shared_ptr<Connection> conn, const string& message) {
     string message_ = message;
     std::string response_str = RESPONSE_SUCCESS_STATUS_LINE + "Transfer-Encoding: chunked" + "\r\n\r\n";
     while (message_.size() > 0) {
@@ -121,25 +129,37 @@ void WebServer::response_chunked(shared_ptr<Request> req, shared_socket sock, co
         }
     }
     response_str += "0\r\n\r\n";
-    sock->async_write_some(buffer(response_str), bind(&WebServer::write_handle, this, _1));
+    conn->response_buffer = response_str;
+    async_write(*conn->sock, buffer(response_str), bind(&WebServer::write_handle, this, conn, _1, _2));
 }
+*/
 
-void WebServer::response(shared_ptr<Request> req, shared_socket sock, const string& message) {
-    if (boost::to_lower_copy(req->getHeader("Accept-Encoding")).find("gzip") != string::npos) {
-        std::string compress_message = gzip_compress(message);
-        std::string header = RESPONSE_SUCCESS_STATUS_LINE; 
-        header += "Content-Length:" + std::to_string(compress_message.size()) + "\r\n";
-        header += "Content-Encoding:gzip\r\n"; 
-        header += "\r\n";
-        sock->async_write_some(buffer(header + compress_message), bind(&WebServer::write_handle, this, _1));
+void WebServer::response(shared_ptr<Connection> conn, const string& message) {
+    string url = conn->request->getUrl();
+    string& ret = conn->response_buffer;
+    ret += RESPONSE_SUCCESS_STATUS_LINE; 
+
+    string* body = new string;
+
+    if (boost::to_lower_copy(conn->request->getHeader("Accept-Encoding")).find("gzip") != string::npos) {
+        gzip_compress(message, *body);
+        ret += "Content-Encoding:gzip\r\n"; 
     } else {
-        std::string header = RESPONSE_SUCCESS_STATUS_LINE + "Content-Length:" + std::to_string(message.size()) + "\r\n\r\n";
-        sock->async_write_some(buffer(header + message), bind(&WebServer::write_handle, this, _1));
+        body = (string*)&message;
     }
-}
 
-void WebServer::response(shared_ptr<Request> req, shared_socket sock, const string& header, const string& message) {
-    sock->async_write_some(buffer(header + message), bind(&WebServer::write_handle, this, _1));
+    std::string extension = get_extension_from_url(conn->request->getUrl());
+    std::string type = extension_to_type(extension);
+
+    if (!type.empty()) {
+        ret += "Content-type:" + type + "\r\n";
+    }
+
+    ret += "Content-Length:" + std::to_string(body->size()) + "\r\n";
+    ret += "\r\n";
+    ret += *body;
+
+    async_write(*conn->sock, buffer(conn->response_buffer), bind(&WebServer::write_handle, this, conn, _1, _2));
 }
 
 bool WebServer::read_conf(const string& file_path, std::map<string, string>& g_conf) {

@@ -49,6 +49,7 @@ public:
     void setStatusDescribe(const string& status_describe);
     void setHeader(const string& key, const string& val);
     void setData(const string& data);
+    string& setData();
 
     const string& getProtocol() const;
     const string& getStatusCode() const;

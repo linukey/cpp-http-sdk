@@ -15,7 +15,10 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <map>
 #include <unordered_map>
+
+#include "third/json.hpp"
 
 using std::string;
 using std::unordered_map;
@@ -25,6 +28,7 @@ using std::cout;
 using std::endl;
 
 using namespace linukey::webserver::http_common;
+using Json = nlohmann::json;
 
 namespace linukey{  
 namespace webserver{    
@@ -63,8 +67,17 @@ public:
      * data : 请求体
      * ret  : 解析结果
      */
-    static bool post_extract(const string& data,
+    static bool post_extract_get(const string& data,
                              unordered_map<string, string>& ret);
+
+    /*
+     * 功能 : 解析post请求体数据
+     * post种类 : json
+     * data : 请求体
+     * ret  : 解析结果
+     */
+    static bool post_extract_json(const string& data,
+                                  std::map<string, string>& ret);
 
     /*
      * 功能 : 解析post请求体数据
@@ -73,9 +86,9 @@ public:
      * data : 请求体
      * ret  : 解析结果
      */
-    static bool post_extract(const string& content_type,
-                             const string& data,
-                             unordered_map<string, string>& ret);
+    static bool post_extract_multipart(const string& content_type,
+                                       const string& data,
+                                       unordered_map<string, string>& ret);
 
     /*
      * 解析请求报文
@@ -107,6 +120,7 @@ public:
     void setProtocol(const string& protocol);
     void setHeader(const string& key, const string& val);
     void setData(const string& data);
+    string& setData();
 
     const string& getMethod() const;
     const string& getUrl() const;

@@ -8,6 +8,7 @@
 
 #include "request.h"
 #include "http_common.h"
+#include "mime_types.h"
 
 #include <iostream>
 #include <fstream>
@@ -23,17 +24,39 @@
 #include <boost/bind.hpp>
 
 using std::shared_ptr;
+using std::unique_ptr;
 using std::string;
 using std::map;
 using linukey::webserver::request::Request;
+using boost::asio::ip::tcp;
 
 using namespace linukey::webserver::http_common;
+using namespace linukey::webserver::mime_types;
 
 namespace linukey{  
 namespace webserver{
 
 typedef shared_ptr<boost::asio::ip::tcp::socket> shared_socket;
 typedef boost::system::error_code e_code;
+
+struct Connection {
+    Connection(boost::asio::io_service& service, size_t buffer_size) {
+        request = new Request;
+        request_buffer = new char[buffer_size];
+        sock = new tcp::socket(service);
+    }
+
+    char* request_buffer;
+    string response_buffer;
+    Request* request;
+    tcp::socket* sock;
+
+    ~Connection() {
+        delete request_buffer;
+        delete request;
+        delete sock;
+    }
+};
 
 class WebServer{    
 public:
@@ -42,13 +65,7 @@ public:
     boost::asio::ip::tcp::acceptor ACCEPTOR;
 
     // 响应 (默认)
-    void response(shared_ptr<Request> req, shared_socket sock, const string& message);
-
-    // 响应 (自定义header)
-    void response(shared_ptr<Request> req, shared_socket sock, const string& header, const string& message);
-
-    // 响应 (chunked)
-    void response_chunked(shared_ptr<Request> req, shared_socket sock, const string& message);
+    void response(shared_ptr<Connection> conn, const string& message);
 
     // 启动
     void run();
@@ -61,23 +78,25 @@ private:
 
     const int buffer_size;
 
-    void accept_handle(shared_socket sock, const e_code& err);
+    void accept_handle(shared_ptr<Connection> conn,
+                       const e_code& err);
 
-    void write_handle(const e_code& err);
+    void write_handle(shared_ptr<Connection> conn,
+                      const e_code& err,
+                      std::size_t bytes_transferred);
 
-    void read_handle(shared_ptr<Request> req,
-                     shared_socket sock,
-                     const e_code& err);
+    void read_handle(shared_ptr<Connection> conn,
+                     const e_code& err,
+                     std::size_t bytes_transferred);
 
-    size_t read_complete(shared_ptr<Request> req,
-                         shared_ptr<char> buff,
+    size_t read_complete(shared_ptr<Connection> conn,
                          const e_code& err,
                          size_t size);
 
 // 业务端实现
 protected:
     // 路由
-    virtual void router(shared_ptr<Request> req, shared_socket sock) = 0;
+    virtual void router(shared_ptr<Connection> conn) = 0;
 };
 
 } // namespace webserver

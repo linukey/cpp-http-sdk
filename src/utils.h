@@ -27,17 +27,22 @@ void file_read_all(const std::string& filename, std::string& buffer);
 /*
  * gzip 压缩
  */
-std::string gzip_compress(const std::string& text);
+void gzip_compress(const std::string& text, std::string& out_text);
 
 /*
  * gzip 解压
  */
-std::string gzip_decompress(const std::string& text);
+void gzip_decompress(const std::string& text, std::string& out_text);
 
 /*
  * urldecode
  */
 void urldecode(const std::string& encd, std::string& decd);
+
+/*
+ * 获取 url extension
+ */
+std::string get_extension_from_url(const std::string& url);
 
 }
 }

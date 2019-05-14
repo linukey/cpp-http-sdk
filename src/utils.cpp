@@ -25,24 +25,22 @@ void file_read_all(const string& filename, string& buffer){
     }
 }
 
-string gzip_compress(const string& text) {
-    string compressedString;
+void gzip_compress(const string& text, string& out_text) {
+    out_text.clear();
     filtering_ostream fos;
     fos.push(gzip_compressor(gzip_params(gzip::best_compression)));
-    fos.push(boost::iostreams::back_inserter(compressedString));
+    fos.push(boost::iostreams::back_inserter(out_text));
     fos << text;
     boost::iostreams::close(fos);
-    return compressedString;
 }
 
-string gzip_decompress(const string& text) {
-    string decompressedString;
+void gzip_decompress(const string& text, string& out_text) {
+    out_text.clear();
     filtering_ostream fos;
     fos.push(gzip_decompressor());
-    fos.push(boost::iostreams::back_inserter(decompressedString));
+    fos.push(boost::iostreams::back_inserter(out_text));
     fos << text;
     fos << std::flush;
-    return decompressedString;
 }
 
 void urldecode(const string& encd, string& decd) {
@@ -66,6 +64,18 @@ void urldecode(const string& encd, string& decd) {
         decd += (char)(p[0] * 16 + p[1]);
     }
 }
+
+std::string get_extension_from_url(const std::string& url) {
+    for (int i = url.size()-1; i >=0; --i) {
+        if (url[i] == '/') {
+            return "";
+        } else if (url[i] == '.') {
+            return url.substr(i+1);
+        }
+    }
+
+    return "";
+};
 
 }
 }

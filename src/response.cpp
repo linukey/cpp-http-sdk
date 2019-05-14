@@ -36,6 +36,10 @@ void Response::setData(const string& data) {
     _data = data;
 }
 
+string& Response::setData() {
+    return _data;
+}
+
 const string& Response::getProtocol() const {
     return _protocol;
 }

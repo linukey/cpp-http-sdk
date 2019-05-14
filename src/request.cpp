@@ -20,7 +20,15 @@ string Request::to_string() {
     return ret;
 }
 
-bool Request::post_extract(const string& data, unordered_map<string, string>& ret) {
+bool Request::post_extract_json(const string& data, std::map<string, string>& ret) {
+    Json json = Json::parse(data);
+    for (Json::iterator it = json.begin(); it != json.end(); ++it) {
+        ret[it.key()] = it.value();
+    }
+    return true;
+}
+
+bool Request::post_extract_get(const string& data, unordered_map<string, string>& ret) {
     vector<string> lines;
     boost::split(lines, data, boost::is_any_of("&"));
     for (const auto& line : lines) {
@@ -32,7 +40,9 @@ bool Request::post_extract(const string& data, unordered_map<string, string>& re
     return true;
 }
 
-bool Request::post_extract(const string& content_type, const string& data, unordered_map<string, string>& ret) {
+bool Request::post_extract_multipart(const string& content_type,
+                                     const string& data,
+                                     unordered_map<string, string>& ret) {
     vector<string> st;
     boost::split(st, content_type, boost::is_any_of("="));
     if (st.size() != 2) { return false; }
@@ -82,7 +92,6 @@ bool Request::post_extract(const string& content_type, const string& data, unord
 
     return true;
 }
-
 
 void Request::extract_header(const string& request_message, const string& key, string& value){
     string result = boost::algorithm::to_lower_copy(request_message);
@@ -182,8 +191,12 @@ void Request::setHeader(const string& key, const string& val) {
     _headers[tmp_key] = val; 
 }
 
-void Request::setData(const string& data) { 
-    _data = data; 
+void Request::setData(const string& data) {
+    _data = data;
+}
+
+string& Request::setData() { 
+    return _data;
 }
 
 const string& Request::getMethod() const { 
