@@ -1,5 +1,5 @@
-#ifndef __LINUKEY_WEBSERVER_MIME_TYPES__
-#define __LINUKEY_WEBSERVER_MIME_TYPES__
+#ifndef __HTTP_HTTPSERVER_MIME_TYPES__
+#define __HTTP_HTTPSERVER_MIME_TYPES__
 
 #include <iostream>
 #include <map>

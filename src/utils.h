@@ -3,8 +3,8 @@
     time: 2017.11.12
 */
 
-#ifndef __FILE_UTILS_H__
-#define __FILE_UTILS_H__
+#ifndef __HTTP_UTILS_H__
+#define __HTTP_UTILS_H__
 
 #include <iostream>
 #include <string>

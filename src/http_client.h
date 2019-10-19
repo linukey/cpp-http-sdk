@@ -3,8 +3,8 @@
     time: 2019.04.04
 */
 
-#ifndef __LINUKEY_WEBCLIENT_H__
-#define __LINUKEY_WEBCLIENT_H__
+#ifndef __HTTP_HTTPCLIENT_H__
+#define __HTTP_HTTPCLIENT_H__
 
 #include <iostream>
 #include <map>

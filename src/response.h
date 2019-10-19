@@ -1,5 +1,5 @@
-#ifndef __LINUKEY_WEBSERVER_RESPONSE__
-#define __LINUKEY_WEBSERVER_RESPONSE__
+#ifndef __HTTP_HTTPSERVER_RESPONSE__
+#define __HTTP_HTTPSERVER_RESPONSE__
 
 #include "http_common.h"
 

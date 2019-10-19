@@ -3,8 +3,8 @@
     time: 2017.11.12
 */
 
-#ifndef __LINUKEY_WEBSERVER_REQUEST__
-#define __LINUKEY_WEBSERVER_REQUEST__
+#ifndef __HTTP_HTTPSERVER_REQUEST__
+#define __HTTP_HTTPSERVER_REQUEST__
 
 #include "http_common.h"
 

@@ -1,5 +1,5 @@
-#ifndef __LINUKEY_HTTP_COMMON_H__
-#define __LINUKEY_HTTP_COMMON_H__
+#ifndef __HTTP_COMMON_H__
+#define __HTTP_COMMON_H__
 
 #include <cstring>
 #include <iostream>

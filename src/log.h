@@ -1,5 +1,5 @@
-#ifndef __LINUKEY_LOG_H__
-#define __LINUKEY_LOG_H__
+#ifndef __HTTP_LOG_H__
+#define __HTTP_LOG_H__
 
 #include <iostream>
 #include <fstream>
