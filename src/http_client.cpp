@@ -99,7 +99,7 @@ bool HttpClient::parse_response_line(const string& response_line,
 }
 
 template <class T>
-Response HttpClient::parse_response_message(T& socket, Request& request) {
+Response HttpClient::parse_response_message(T& socket, const Request& request) {
     try {
         // 发送请求
         socket.write_some(boost::asio::buffer(request.to_string()));
@@ -112,6 +112,8 @@ Response HttpClient::parse_response_message(T& socket, Request& request) {
         boost::asio::read_until(socket, response_streambuf, "\r\n");
         string response_line;
         getline(response_stream, response_line);
+
+        boost::trim(response_line);
         parse_response_line(response_line, response);
 
         // 解析响应头

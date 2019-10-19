@@ -3,7 +3,7 @@
 namespace http{    
 namespace response{
 
-string Response::to_string() {
+string Response::to_string() const {
     string ret;
     ret = _protocol + SPACE + _status_code + SPACE + _status_describe + CRLF;
     for (auto it = _headers.begin(); it != _headers.end(); ++it) {

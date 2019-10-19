@@ -47,7 +47,7 @@ private:
      */
     template <class T>
     Response parse_response_message(T& socket,
-                                    Request& request);
+                                    const Request& request);
     /*
      * 构建请求报文
      */

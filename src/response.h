@@ -40,7 +40,7 @@ public:
     /*
      * 生成响应报文文本
      */
-    string to_string();
+    string to_string() const;
 
 public:
     void setProtocol(const string& protocol);

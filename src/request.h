@@ -97,7 +97,7 @@ public:
     /*
      * 功能 ：生成请求报文文本
      */
-    string to_string();
+    string to_string() const;
 
 protected:
     /*

@@ -8,7 +8,7 @@
 namespace http {  
 namespace request {    
 
-string Request::to_string() {
+string Request::to_string() const {
     string ret;
     ret = _method + SPACE + _url + SPACE + _protocol + CRLF;
     for (auto it = _headers.begin(); it != _headers.end(); ++it) {
