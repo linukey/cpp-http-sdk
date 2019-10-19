@@ -50,11 +50,11 @@ public:
     void setData(const string& data);
     string& setData();
 
-    const string& getProtocol() const;
-    const string& getStatusCode() const;
-    const string& getStatusDescribe() const;
-    const string& getHeader(const string& key);
-    const string& getData() const ;
+    const string& Protocol() const;
+    const string& StatusCode() const;
+    const string& StatusDescribe() const;
+    const string& Header(const string& key);
+    const string& Data() const ;
     
 };
 

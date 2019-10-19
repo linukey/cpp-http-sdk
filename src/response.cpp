@@ -39,24 +39,24 @@ string& Response::setData() {
     return _data;
 }
 
-const string& Response::getProtocol() const {
+const string& Response::Protocol() const {
     return _protocol;
 }
 
-const string& Response::getStatusCode() const {
+const string& Response::StatusCode() const {
     return _status_code;
 }
 
-const string& Response::getStatusDescribe() const {
+const string& Response::StatusDescribe() const {
     return _status_describe;
 }
 
-const string& Response::getHeader(const string& key) {
+const string& Response::Header(const string& key) {
     string tmp_key = boost::algorithm::to_lower_copy(key);
     return _headers[tmp_key];
 }
 
-const string& Response::getData() const {
+const string& Response::Data() const {
     return _data;
 }
 

@@ -70,16 +70,16 @@ size_t HttpServer::read_complete(shared_ptr<Connection> conn, const e_code& err,
     }
 
     // 根据 method 类型决定是否继续读取 请求体
-    if (conn->request->getMethod().empty()){
+    if (conn->request->Method().empty()){
         conn->request->extract_request(request);
-        if (boost::algorithm::to_lower_copy(conn->request->getMethod()) == "get") {
+        if (boost::algorithm::to_lower_copy(conn->request->Method()) == "get") {
             return false;
-        } else if (boost::algorithm::to_lower_copy(conn->request->getMethod()) == "post") {
-            return stoi(conn->request->getHeader("content-length")) != 0;
+        } else if (boost::algorithm::to_lower_copy(conn->request->Method()) == "post") {
+            return stoi(conn->request->Header("content-length")) != 0;
         }
     } else {
         string body = request.substr(pos + 4);    
-        int content_length = stoi(conn->request->getHeader("content-length"));
+        int content_length = stoi(conn->request->Header("content-length"));
         if (int(body.size()) == content_length) {
             conn->request->setData(body);
             return false;
@@ -98,7 +98,7 @@ void HttpServer::read_handle(shared_ptr<Connection> conn,
         return;
     }
 
-    LOGOUT(INFO, "% request % ...", conn->request->getHeader("host"), conn->request->getUrl());
+    LOGOUT(INFO, "% request % ...", conn->request->Header("host"), conn->request->Url());
 
     router(conn);
 }
@@ -137,20 +137,20 @@ void HttpServer::response_chunked(shared_ptr<Connection> conn, const string& mes
 */
 
 void HttpServer::response(shared_ptr<Connection> conn, const string& message) {
-    string url = conn->request->getUrl();
+    string url = conn->request->Url();
     string& ret = conn->response_buffer;
     ret += RESPONSE_SUCCESS_STATUS_LINE; 
 
     string* body = new string;
 
-    if (boost::to_lower_copy(conn->request->getHeader("Accept-Encoding")).find("gzip") != string::npos) {
+    if (boost::to_lower_copy(conn->request->Header("Accept-Encoding")).find("gzip") != string::npos) {
         gzip_compress(message, *body);
         ret += "Content-Encoding:gzip\r\n"; 
     } else {
         body = (string*)&message;
     }
 
-    std::string extension = get_extension_from_url(conn->request->getUrl());
+    std::string extension = get_extension_from_url(conn->request->Url());
     std::string type = extension_to_type(extension);
 
     if (!type.empty()) {

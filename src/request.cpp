@@ -198,24 +198,24 @@ string& Request::setData() {
     return _data;
 }
 
-const string& Request::getMethod() const { 
+const string& Request::Method() const { 
     return _method; 
 }
 
-const string& Request::getUrl() const { 
+const string& Request::Url() const { 
     return _url; 
 }
 
-const string& Request::getProtocol() const { 
+const string& Request::Protocol() const { 
     return _protocol; 
 }
 
-const string& Request::getHeader(const string& key) { 
+const string& Request::Header(const string& key) { 
     string tmp_key = boost::algorithm::to_lower_copy(key);
     return _headers[tmp_key]; 
 }
 
-const string& Request::getData() const { 
+const string& Request::Data() const { 
     return _data; 
 }
 

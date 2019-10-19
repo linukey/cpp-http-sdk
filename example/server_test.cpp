@@ -40,7 +40,7 @@ public:
 
     // 实现自己的业务路由
     void router(shared_ptr<Connection> conn) override {
-        if (conn->request->getUrl() == "/") {
+        if (conn->request->Url() == "/") {
             fstream fout("html/index.html");
             if (fout.is_open()) {
                 string html = read_file(fout);

@@ -121,11 +121,11 @@ public:
     void setData(const string& data);
     string& setData();
 
-    const string& getMethod() const;
-    const string& getUrl() const;
-    const string& getProtocol() const;
-    const string& getHeader(const string& key);
-    const string& getData() const;
+    const string& Method() const;
+    const string& Url() const;
+    const string& Protocol() const;
+    const string& Header(const string& key);
+    const string& Data() const;
     
     void printHeaders();
 };

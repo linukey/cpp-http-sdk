@@ -95,7 +95,7 @@ bool HttpClient::parse_response_line(const string& response_line,
     }
     response.setStatusDescribe(status_des);
 
-    return response.getProtocol().substr(0, 5) == "HTTP/";
+    return response.Protocol().substr(0, 5) == "HTTP/";
 }
 
 template <class T>
@@ -128,8 +128,8 @@ Response HttpClient::parse_response_message(T& socket, Request& request) {
         // 接收包体
         string& response_body = response.setData();
         // chunked 方式
-        if (response.getHeader("content-length").empty()) {
-            if (response.getHeader("transfer-encoding") != "chunked") {
+        if (response.Header("content-length").empty()) {
+            if (response.Header("transfer-encoding") != "chunked") {
                 LOGOUT(http::log::FATAL, "%", "no content-length and transfer-encoding");
                 return Response();
             }
@@ -170,7 +170,7 @@ Response HttpClient::parse_response_message(T& socket, Request& request) {
 
         // content-length 方式
         } else {
-            int content_length = stoi(response.getHeader("content-length"));
+            int content_length = stoi(response.Header("content-length"));
             boost::asio::streambuf::const_buffers_type cbt = response_streambuf.data();
             string first(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
             response_body += first;
@@ -185,8 +185,8 @@ Response HttpClient::parse_response_message(T& socket, Request& request) {
         }
 
         // 如果是gzip，解压
-        if (boost::to_lower_copy(response.getHeader("Content-Encoding")) == "gzip") {
-            string data = response.getData();
+        if (boost::to_lower_copy(response.Header("Content-Encoding")) == "gzip") {
+            string data = response.Data();
             string& decompress_data = response.setData();
             http::utils::gzip_decompress(data, decompress_data);
         }
