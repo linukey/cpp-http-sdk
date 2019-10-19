@@ -23,18 +23,15 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
-using std::shared_ptr;
-using std::unique_ptr;
-using std::string;
-using std::map;
-using linukey::webserver::request::Request;
+using namespace std;
+using namespace http::common;
+using namespace http::mime_types;
+
+using http::request::Request;
 using boost::asio::ip::tcp;
 
-using namespace linukey::webserver::http_common;
-using namespace linukey::webserver::mime_types;
-
-namespace linukey{  
-namespace webserver{
+namespace http{  
+namespace httpserver{
 
 typedef shared_ptr<boost::asio::ip::tcp::socket> shared_socket;
 typedef boost::system::error_code e_code;
@@ -58,9 +55,9 @@ struct Connection {
     }
 };
 
-class WebServer{    
+class HttpServer{    
 public:
-    WebServer(int buffer_size, int port);
+    HttpServer(int buffer_size, int port);
     boost::asio::io_service SERVICE;
     boost::asio::ip::tcp::acceptor ACCEPTOR;
 

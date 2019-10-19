@@ -18,11 +18,10 @@ using std::shared_ptr;
 using std::cout;
 using std::endl;
 
-using namespace linukey::webserver::http_common;
+using namespace http::common;
 
-namespace linukey{  
-namespace webserver{    
-namespace response{
+namespace http {
+namespace response {    
 
 class Response {
 private:
@@ -59,6 +58,6 @@ public:
     
 };
 
-}}}
+}}
 
 #endif

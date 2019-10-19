@@ -11,14 +11,16 @@
 #include "http_common.h"
 
 using namespace boost::asio;
-using namespace linukey::webserver;
-using namespace linukey::webserver::request;
-using namespace linukey::webserver::log;
-using namespace linukey::webserver::utils;
-using namespace linukey::webserver::http_common;
+using namespace http::request;
+using namespace http::log;
+using namespace http::utils;
+using namespace http::common;
 using boost::asio::ip::tcp;
 
-WebServer::WebServer(int buffer_size, int port) : 
+namespace http {
+namespace httpserver {
+
+HttpServer::HttpServer(int buffer_size, int port) : 
                                                 ACCEPTOR(SERVICE),
                                                 buffer_size(buffer_size) {
     boost::asio::ip::tcp::endpoint ep(boost::asio::ip::tcp::v4(), port);
@@ -28,18 +30,18 @@ WebServer::WebServer(int buffer_size, int port) :
     ACCEPTOR.listen();
 }
 
-void WebServer::run(){    
+void HttpServer::run(){    
     LOGOUT(INFO, "%", "start server...");
     accept();
     SERVICE.run();
 }
 
-void WebServer::accept() {
+void HttpServer::accept() {
     shared_ptr<Connection> conn(new Connection(SERVICE, buffer_size));
-    ACCEPTOR.async_accept(*conn->sock, boost::bind(&WebServer::accept_handle, this, conn, _1));
+    ACCEPTOR.async_accept(*conn->sock, boost::bind(&HttpServer::accept_handle, this, conn, _1));
 }
 
-void WebServer::accept_handle(shared_ptr<Connection> conn, const e_code& err){
+void HttpServer::accept_handle(shared_ptr<Connection> conn, const e_code& err){
     if (err){
         LOGOUT(FATAL, "%", "accept fatal");
         return;
@@ -47,14 +49,14 @@ void WebServer::accept_handle(shared_ptr<Connection> conn, const e_code& err){
 
     async_read(*conn->sock, 
                buffer(conn->request_buffer, buffer_size), 
-               bind(&WebServer::read_complete, this, conn, _1, _2),
-               bind(&WebServer::read_handle, this, conn, _1, _2));
+               bind(&HttpServer::read_complete, this, conn, _1, _2),
+               bind(&HttpServer::read_handle, this, conn, _1, _2));
 
     accept();
 }
 
 // 逐个字节的读
-size_t WebServer::read_complete(shared_ptr<Connection> conn, const e_code& err, size_t size){
+size_t HttpServer::read_complete(shared_ptr<Connection> conn, const e_code& err, size_t size){
     if (err) {
         LOGOUT(FATAL, "%", "receive request error");
         return 0;
@@ -87,7 +89,7 @@ size_t WebServer::read_complete(shared_ptr<Connection> conn, const e_code& err, 
     return true;
 }
 
-void WebServer::read_handle(shared_ptr<Connection> conn,
+void HttpServer::read_handle(shared_ptr<Connection> conn,
                             const e_code& err,
                             std::size_t bytes_transferred){
     boost::asio::ip::tcp::endpoint endpoint = conn->sock->remote_endpoint();
@@ -101,7 +103,7 @@ void WebServer::read_handle(shared_ptr<Connection> conn,
     router(conn);
 }
 
-void WebServer::write_handle(shared_ptr<Connection> conn,
+void HttpServer::write_handle(shared_ptr<Connection> conn,
                              const e_code& err,
                              std::size_t bytes_transferred){
     if (err){
@@ -111,7 +113,7 @@ void WebServer::write_handle(shared_ptr<Connection> conn,
 }
 
 /*
-void WebServer::response_chunked(shared_ptr<Connection> conn, const string& message) {
+void HttpServer::response_chunked(shared_ptr<Connection> conn, const string& message) {
     string message_ = message;
     std::string response_str = RESPONSE_SUCCESS_STATUS_LINE + "Transfer-Encoding: chunked" + "\r\n\r\n";
     while (message_.size() > 0) {
@@ -130,11 +132,11 @@ void WebServer::response_chunked(shared_ptr<Connection> conn, const string& mess
     }
     response_str += "0\r\n\r\n";
     conn->response_buffer = response_str;
-    async_write(*conn->sock, buffer(response_str), bind(&WebServer::write_handle, this, conn, _1, _2));
+    async_write(*conn->sock, buffer(response_str), bind(&HttpServer::write_handle, this, conn, _1, _2));
 }
 */
 
-void WebServer::response(shared_ptr<Connection> conn, const string& message) {
+void HttpServer::response(shared_ptr<Connection> conn, const string& message) {
     string url = conn->request->getUrl();
     string& ret = conn->response_buffer;
     ret += RESPONSE_SUCCESS_STATUS_LINE; 
@@ -159,10 +161,10 @@ void WebServer::response(shared_ptr<Connection> conn, const string& message) {
     ret += "\r\n";
     ret += *body;
 
-    async_write(*conn->sock, buffer(conn->response_buffer), bind(&WebServer::write_handle, this, conn, _1, _2));
+    async_write(*conn->sock, buffer(conn->response_buffer), bind(&HttpServer::write_handle, this, conn, _1, _2));
 }
 
-bool WebServer::read_conf(const string& file_path, std::map<string, string>& g_conf) {
+bool HttpServer::read_conf(const string& file_path, std::map<string, string>& g_conf) {
     std::fstream fout(file_path);
     if (!fout.is_open()) {
         return false;
@@ -182,3 +184,5 @@ bool WebServer::read_conf(const string& file_path, std::map<string, string>& g_c
     }
     return true;
 }
+
+}}

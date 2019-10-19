@@ -11,13 +11,13 @@
 #include "response.h"
 #include "request.h"
 
-using linukey::webserver::response::Response;
-using linukey::webserver::request::Request;
+using http::response::Response;
+using http::request::Request;
 
-namespace linukey {
-namespace webclient {
+namespace http {
+namespace httpclient {
 
-class WebClient {
+class HttpClient {
 public:
     /*
      * func : http客户端请求，支持https
@@ -63,7 +63,6 @@ private:
     bool parse_response_line(const string& response_line, Response& response);
 };
 
-}
-}
+}}
 
 #endif

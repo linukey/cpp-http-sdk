@@ -10,8 +10,7 @@
 
 using std::string;
 
-namespace linukey {
-namespace webserver {
+namespace http {
 namespace log {
 
 enum LOG_LEVEL
@@ -104,8 +103,6 @@ static void LOGOUT(LOG_LEVEL level, T head, Args... rest)
     fout.close();
 }
 
-}
-}
-}
+}}
 
 #endif

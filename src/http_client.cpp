@@ -13,18 +13,17 @@
 #include "utils.h"
 #include "request.h"
 
+using namespace std;
 using boost::asio::ip::tcp;
-using linukey::webserver::request::Request;
-using std::string;
-using std::vector;
+using http::request::Request;
 
-namespace linukey {
-namespace webclient {
+namespace http {
+namespace httpclient {
 
-void WebClient::extract_host_port(const std::string& url,
-                                  std::string& protocol,
-                                  std::string& host,
-                                  std::string& port) {
+void HttpClient::extract_host_port(const string& url,
+                                   string& protocol,
+                                   string& host,
+                                   string& port) {
     size_t pos = url.find("http://");
     int len = 7;
 
@@ -59,11 +58,11 @@ void WebClient::extract_host_port(const std::string& url,
     }
 }
 
-Request WebClient::build_request_message(const string& url,
-                                         const string& method,
-                                         const string& host,
-                                         const string& data,
-                                         std::map<string, string>* headers) {
+Request HttpClient::build_request_message(const string& url,
+                                          const string& method,
+                                          const string& host,
+                                          const string& data,
+                                          map<string, string>* headers) {
     Request request;
     request.setMethod(method);
     request.setUrl(url);
@@ -80,8 +79,8 @@ Request WebClient::build_request_message(const string& url,
     return request;
 }
 
-bool WebClient::parse_response_line(const string& response_line,
-                                    Response& response) {
+bool HttpClient::parse_response_line(const string& response_line,
+                                     Response& response) {
     vector<string> ret;
     boost::split(ret, response_line, boost::is_any_of(" "));
 
@@ -100,25 +99,25 @@ bool WebClient::parse_response_line(const string& response_line,
 }
 
 template <class T>
-Response WebClient::parse_response_message(T& socket, Request& request) {
+Response HttpClient::parse_response_message(T& socket, Request& request) {
     try {
         // 发送请求
         socket.write_some(boost::asio::buffer(request.to_string()));
 
         Response response;
         boost::asio::streambuf response_streambuf;
-        std::istream response_stream(&response_streambuf);
+        istream response_stream(&response_streambuf);
 
         // 解析状态行
         boost::asio::read_until(socket, response_streambuf, "\r\n");
         string response_line;
-        std::getline(response_stream, response_line);
+        getline(response_stream, response_line);
         parse_response_line(response_line, response);
 
         // 解析响应头
         boost::asio::read_until(socket, response_streambuf, "\r\n\r\n");
         string header_line;
-        while (std::getline(response_stream, header_line) && header_line != "\r") {
+        while (getline(response_stream, header_line) && header_line != "\r") {
             size_t pos = header_line.find(":");
             if (pos == string::npos) { continue; }
             string key = boost::trim_copy(header_line.substr(0, pos));
@@ -131,7 +130,7 @@ Response WebClient::parse_response_message(T& socket, Request& request) {
         // chunked 方式
         if (response.getHeader("content-length").empty()) {
             if (response.getHeader("transfer-encoding") != "chunked") {
-                LOGOUT(webserver::log::FATAL, "%", "no content-length and transfer-encoding");
+                LOGOUT(http::log::FATAL, "%", "no content-length and transfer-encoding");
                 return Response();
             }
 
@@ -150,8 +149,8 @@ Response WebClient::parse_response_message(T& socket, Request& request) {
                     chunked_body += read_str;
                     response_streambuf.consume(read_str.size());
                 }
-                std::stringstream ss;
-                ss << std::hex << chunked_body.substr(cur, pos-cur);
+                stringstream ss;
+                ss << hex << chunked_body.substr(cur, pos-cur);
                 ss >> len;
                 cur = cur + (pos-cur) + 2;
                 while (chunked_body.size()-cur < len+2) {
@@ -189,33 +188,33 @@ Response WebClient::parse_response_message(T& socket, Request& request) {
         if (boost::to_lower_copy(response.getHeader("Content-Encoding")) == "gzip") {
             string data = response.getData();
             string& decompress_data = response.setData();
-            linukey::webserver::utils::gzip_decompress(data, decompress_data);
+            http::utils::gzip_decompress(data, decompress_data);
         }
 
         return response;
-    } catch (std::exception& e) {
-        LOGOUT(webserver::log::FATAL, "%", e.what());
+    } catch (const exception& e) {
+        LOGOUT(http::log::FATAL, "%", e.what());
         return Response();
     }
 }
 
-Response WebClient::http_request(const string& url,
-                                 const string& method,
-                                 std::map<string, string>* headers,
-                                 const string& data) {
+Response HttpClient::http_request(const string& url,
+                                  const string& method,
+                                  map<string, string>* headers,
+                                  const string& data) {
     string protocol, host, port;
 
     // 解析 协议头、host、port
     extract_host_port(url, protocol, host, port);
 
     if (host.empty() || protocol.empty()) {
-        LOGOUT(webserver::log::FATAL, "%:%", __func__, "not valid url!");
+        LOGOUT(http::log::FATAL, "%:%", __func__, "not valid url!");
         return Response();
     }
 
     // 只支持 http、https 协议
     if (protocol != "http" && protocol != "https") {
-        LOGOUT(webserver::log::FATAL, "protocol % error, only support http and https!", protocol);
+        LOGOUT(http::log::FATAL, "protocol % error, only support http and https!", protocol);
         return Response();
     }
 
@@ -260,8 +259,8 @@ Response WebClient::http_request(const string& url,
         }
 
         return Response();
-    } catch (std::exception& e) {
-        LOGOUT(webserver::log::FATAL, "%", e.what());
+    } catch (const exception& e) {
+        LOGOUT(http::log::FATAL, "%", e.what());
         return Response();
     }
 }

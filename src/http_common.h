@@ -10,9 +10,8 @@ using std::string;
 using std::vector;
 using std::map;
 
-namespace linukey {
-namespace webserver {
-namespace http_common {
+namespace http {
+namespace common {
 
 static const string CRLF = "\r\n";
 static const string SPACE = " ";
@@ -32,8 +31,6 @@ static const vector<string> HEADERS = {
 
 static const string RESPONSE_SUCCESS_STATUS_LINE = "HTTP/1.1 200 OK\r\n";
 
-}
-}
-}
+}}
 
 #endif

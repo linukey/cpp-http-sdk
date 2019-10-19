@@ -27,11 +27,10 @@ using std::shared_ptr;
 using std::cout;
 using std::endl;
 
-using namespace linukey::webserver::http_common;
+using namespace http::common;
 using Json = nlohmann::json;
 
-namespace linukey{  
-namespace webserver{    
+namespace http{    
 namespace request{
 
 // 请求方法
@@ -131,8 +130,6 @@ public:
     void printHeaders();
 };
 
-}
-}
-}
+}}
 
 #endif

@@ -1,7 +1,6 @@
 #include "response.h"
 
-namespace linukey{  
-namespace webserver{    
+namespace http{    
 namespace response{
 
 string Response::to_string() {
@@ -61,4 +60,4 @@ const string& Response::getData() const {
     return _data;
 }
 
-}}}
+}}

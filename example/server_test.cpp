@@ -10,7 +10,7 @@
 #include <memory>
 
 using namespace std;
-using namespace linukey::webserver;
+using namespace http::httpserver;
 
 map<string, string> g_conf;
 
@@ -33,10 +33,10 @@ string read_file(fstream& fin) {
  * 通过继承WebServer类，重写router方法，实现自己的业务端路由
  * 可以快速搭建一个本地http-server，而不必去关心http-server的底层实现
  */
-class MyServer : public WebServer {
+class MyServer : public HttpServer {
 public:
     MyServer(int buffer_size, int port) : 
-        WebServer(buffer_size, port) {}
+        HttpServer(buffer_size, port) {}
 
     // 实现自己的业务路由
     void router(shared_ptr<Connection> conn) override {

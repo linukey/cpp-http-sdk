@@ -5,12 +5,11 @@
 #include <map>
 #include <string>
 
-namespace linukey {
-namespace webserver {
+namespace http {
 namespace mime_types {
 
 std::string extension_to_type(std::string extension);
 
-}}}
+}}
 
 #endif

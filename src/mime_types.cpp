@@ -1,7 +1,6 @@
 #include "mime_types.h"
 
-namespace linukey {
-namespace webserver {
+namespace http {
 namespace mime_types {
 
 std::map<std::string, std::string> MIME_TYPES = {
@@ -75,4 +74,4 @@ std::string extension_to_type(std::string extension) {
     return "";
 }
 
-}}}
+}}

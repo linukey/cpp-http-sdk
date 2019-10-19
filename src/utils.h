@@ -15,8 +15,7 @@
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 
-namespace linukey {
-namespace webserver {
+namespace http {
 namespace utils {
 
 /*
@@ -44,8 +43,6 @@ void urldecode(const std::string& encd, std::string& decd);
  */
 std::string get_extension_from_url(const std::string& url);
 
-}
-}
-}
+}}
 
 #endif

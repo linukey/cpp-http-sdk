@@ -8,8 +8,7 @@
 using namespace std;
 using namespace boost::iostreams;
 
-namespace linukey {
-namespace webserver {
+namespace http {
 namespace utils {
 
 void file_read_all(const string& filename, string& buffer){
@@ -77,6 +76,4 @@ std::string get_extension_from_url(const std::string& url) {
     return "";
 };
 
-}
-}
-}
+}}

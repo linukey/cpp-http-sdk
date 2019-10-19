@@ -5,9 +5,8 @@
 
 #include "request.h"
 
-namespace linukey{  
-namespace webserver{    
-namespace request{
+namespace http {  
+namespace request {    
 
 string Request::to_string() {
     string ret;
@@ -226,6 +225,4 @@ void Request::printHeaders() {
     }
 }
 
-}
-}
-}
+}}
