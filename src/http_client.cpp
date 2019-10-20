@@ -210,7 +210,7 @@ Response HttpClient::http_request(const string& url,
     extract_host_port(url, protocol, host, port);
 
     if (host.empty() || protocol.empty()) {
-        LOGOUT(http::log::FATAL, "%:%", __func__, "not valid url!");
+        LOGOUT(http::log::FATAL, "% : % url=%", __func__, "not valid url!", url);
         return Response();
     }
 
