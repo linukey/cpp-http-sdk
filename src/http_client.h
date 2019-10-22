@@ -10,12 +10,18 @@
 #include <map>
 #include "response.h"
 #include "request.h"
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 
 using http::response::Response;
 using http::request::Request;
 
 namespace http {
 namespace httpclient {
+
+struct Socket {
+    boost::asio::ip::tcp::socket socket;
+};
 
 class HttpClient {
 public:
@@ -26,6 +32,7 @@ public:
      * method  : 请求方法
      * headers : 请求头
      * data    : 请求体
+     * timeout : 
      *
      * Response : 响应报文信息
      *
@@ -33,7 +40,8 @@ public:
     Response http_request(const std::string& url,
                           const std::string& method,
                           std::map<string, string>* headers,
-                          const std::string& data);
+                          const std::string& data,
+                          int timeout = 2);
 private:
     /*
      * func : 从url中提取host
@@ -61,6 +69,16 @@ private:
      * 解析响应报文状态行
      */
     bool parse_response_line(const string& response_line, Response& response);
+
+    void connect_handler_http(boost::asio::ip::tcp::socket& socket,
+                              http::request::Request& request,
+                              http::response::Response& response,
+                              const boost::system::error_code& error);
+
+    void connect_handler_https(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,
+                               Request& request,
+                               Response& response,
+                               const boost::system::error_code& error);
 };
 
 }}
