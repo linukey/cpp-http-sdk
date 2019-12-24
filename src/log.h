@@ -41,7 +41,7 @@ template <class T, class ...Args>
 static void msnprintf(string& buffer, string pattern, T head, Args... rest) 
 {
     size_t pos = pattern.find("%");
-    while (pos != string::npos && pos-1 >= 0 && pattern[pos-1] == '\\') {
+    while (pos != string::npos && pos > 0 && pattern[pos-1] == '\\') {
         pattern = pattern.substr(0, pos-1) + pattern.substr(pos);
         pos = pattern.find("%", pos);
     }
@@ -56,7 +56,7 @@ static void msnprintf(string& buffer, string pattern, T head, Args... rest)
 
     if (sizeof...(rest) == 0) {
         pos = rest_pattern.find("%");
-        if (pos != string::npos && pos-1 >= 0 && rest_pattern[pos-1] != '\\') { 
+        if (pos != string::npos && pos > 0 && rest_pattern[pos-1] != '\\') { 
             throw; 
         } else if (pos != string::npos) {
             rest_pattern = rest_pattern.substr(0, pos-1) + rest_pattern.substr(pos);

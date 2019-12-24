@@ -315,9 +315,9 @@ void HttpClient::connect_handler_https(boost::asio::ssl::stream<tcp::socket>& so
         return;
     }
 
-    socket.handshake(boost::asio::ssl::stream_base::client);
 
     try {
+        socket.handshake(boost::asio::ssl::stream_base::client);
         // 发送请求
         socket.write_some(boost::asio::buffer(request.to_string()));
 
@@ -465,16 +465,23 @@ Response HttpClient::http_request(const string& url,
 
         // https
         if (protocol == "https") {
-            boost::asio::ssl::context ctx(boost::asio::ssl::context::sslv23);
-            boost::asio::ssl::stream<tcp::socket> socket(io_context, ctx);
-            socket.set_verify_mode(boost::asio::ssl::verify_none);
+            boost::asio::ssl::context ctx(boost::asio::ssl::context::tlsv12_client);
+            ctx.set_verify_mode(boost::asio::ssl::verify_none);
+            boost::asio::ssl::stream<tcp::socket> socket{io_context, ctx};
+
+            // Set SNI Hostname (many hosts need this to handshake successfully)
+            // https://github.com/boostorg/beast/blob/develop/example/http/client/sync-ssl/http_client_sync_ssl.cpp
+            if(!SSL_set_tlsext_host_name(socket.native_handle(), host.c_str())) {
+                boost::system::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
+                    throw boost::system::system_error{ec};
+            }
+
             socket.lowest_layer().async_connect(endpoint, boost::bind(&HttpClient::connect_handler_https,
                                                                       this,
                                                                       ref(socket),
                                                                       ref(request),
                                                                       ref(response),
                                                                       _1));
-
             // set timeout
             io_context.run_for(std::chrono::seconds(timeout));
             if (!io_context.stopped()) {
