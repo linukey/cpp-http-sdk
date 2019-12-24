@@ -46,30 +46,20 @@ private:
     /*
      * func : 从url中提取host
      */
-    void extract_host_port(const std::string& url,
+    bool extract_host_port(const std::string& url,
                            std::string& protocol,
                            std::string& host,
                            std::string& port);
     /*
-     * 解析响应报文
-     */
-    template <class T>
-    Response parse_response_message(T& socket,
-                                    const Request& request);
-    /*
      * 构建请求报文
      */
-    Request build_request_message(const std::string& url,
-                                  const std::string& method,
-                                  const std::string& host,
-                                  const std::string& data,
-                                  std::map<std::string,
-                                  std::string>* headers);
-    /*
-     * 解析响应报文状态行
-     */
-    bool parse_response_line(const string& response_line, Response& response);
-
+    void build_request_message(const std::string& url,
+                               const std::string& method,
+                               const std::string& host,
+                               const std::string& data,
+                               std::map<std::string,
+                               std::string>* headers,
+                               Request& request);
     void connect_handler_http(boost::asio::ip::tcp::socket& socket,
                               http::request::Request& request,
                               http::response::Response& response,
@@ -79,6 +69,16 @@ private:
                                Request& request,
                                Response& response,
                                const boost::system::error_code& error);
+
+    template<class T>
+    void parse_response(T& socket,
+                        Request& request,
+                        Response& response);
+
+    /*
+     * 解析响应报文状态行
+     */
+    bool parse_response_line(const string& response_line, Response& response);
 };
 
 }}
