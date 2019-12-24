@@ -20,7 +20,7 @@ using http::request::Request;
 namespace http {
 namespace httpclient {
 
-bool HttpClient::extract_host_port(const string& url,
+bool HttpClient::extract_host_port(string url,
                                    string& protocol,
                                    string& host,
                                    string& port) {
@@ -40,7 +40,8 @@ bool HttpClient::extract_host_port(const string& url,
 
     pos = url.find("/", len);
     if (pos == string::npos) {
-        return false;
+        url += "/";
+        pos = url.find("/", len);
     }
 
     size_t port_pos = url.find(":", len);
@@ -131,13 +132,8 @@ void HttpClient::parse_response(T& socket,
 
         // 接收包体
         string& response_body = response.setData();
-        // chunked 方式
-        if (response.Header("content-length").empty()) {
-            if (response.Header("transfer-encoding") != "chunked") {
-                LOGOUT(http::log::FATAL, "%", "no content-length and transfer-encoding");
-                return;
-            }
-
+        // chunked
+        if (response.Header("transfer-encoding") == "chunked") {
             int cur = 0, len = 0;
             size_t pos = string::npos;
 
@@ -171,9 +167,8 @@ void HttpClient::parse_response(T& socket,
                 }
                 cur = cur + 2 + len;
             }
-
-        // content-length 方式
-        } else {
+        // content-length
+        } else if (response.Header("content-length").size() > 0) {
             int content_length = stoi(response.Header("content-length"));
             boost::asio::streambuf::const_buffers_type cbt = response_streambuf.data();
             string first(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
@@ -186,6 +181,8 @@ void HttpClient::parse_response(T& socket,
             string rest(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
             response_body += rest;
             response_streambuf.consume(rest.size());
+        } else {
+            LOGOUT(http::log::FATAL, "%", "no content-length and transfer-encoding");
         }
 
         // 如果是gzip，解压

@@ -46,7 +46,7 @@ private:
     /*
      * func : 从url中提取host
      */
-    bool extract_host_port(const std::string& url,
+    bool extract_host_port(std::string url,
                            std::string& protocol,
                            std::string& host,
                            std::string& port);
