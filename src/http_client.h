@@ -41,7 +41,8 @@ public:
                           const std::string& method,
                           std::map<string, string>* headers,
                           const std::string& data,
-                          int timeout = 2);
+                          int timeout = 2,
+                          int redirect_count = 0);
 private:
     /*
      * func : 从url中提取host
@@ -60,6 +61,7 @@ private:
                                std::map<std::string,
                                std::string>* headers,
                                Request& request);
+
     void connect_handler_http(boost::asio::ip::tcp::socket& socket,
                               http::request::Request& request,
                               http::response::Response& response,
@@ -79,6 +81,13 @@ private:
      * 解析响应报文状态行
      */
     bool parse_response_line(const string& response_line, Response& response);
+
+    /*
+     * 处理http_code 3xx
+     */
+    string build_redirection_url(const string& protocol,
+                                 const string& host,
+                                 Response& response);
 };
 
 }}

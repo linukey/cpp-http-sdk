@@ -218,11 +218,25 @@ void HttpClient::connect_handler_https(boost::asio::ssl::stream<tcp::socket>& so
     }
 }
 
+string HttpClient::build_redirection_url(const string& protocol,
+                                         const string& host,
+                                         Response& response) {
+    string redirect = response.Header("Location");
+    boost::trim(redirect);
+
+    if (redirect[0] == '/') {
+        redirect = (protocol + "://" + host) + redirect;
+    }
+
+    return redirect;
+}
+
 Response HttpClient::http_request(const string& url,
                                   const string& method,
                                   map<string, string>* headers,
                                   const string& data,
-                                  int timeout) {
+                                  int timeout,
+                                  int redirect_count) {
     Response response;
     string protocol, host, port;
 
@@ -303,6 +317,19 @@ Response HttpClient::http_request(const string& url,
             if (!io_context.stopped()) {
                 LOGOUT(http::log::ERROR, "timeout url=%", url);
                 socket.close();
+            }
+        }
+
+        // 3xx Redirection
+        if (redirect_count <= 5) {
+            string code = response.StatusCode();
+            if (code == "301" || code == "302") {
+                string lower_method = boost::to_lower_copy(method);
+                if (lower_method == "get" || lower_method == "head") {
+                    string re_url = build_redirection_url(protocol, host, response);
+                    LOGOUT(http::log::INFO, "% redirect to %", url, re_url);
+                    response = http_request(re_url, method, headers, data, timeout, redirect_count+1);
+                }
             }
         }
 
