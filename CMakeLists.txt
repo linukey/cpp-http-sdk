@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.8)
 
-set(CMAKE_SKIP_BUILD_RPATH TRUE)
+#set(CMAKE_SKIP_BUILD_RPATH TRUE)
 add_compile_options(-std=c++11)
 
 LINK_DIRECTORIES(/usr/local/lib64)
