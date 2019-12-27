@@ -110,14 +110,31 @@ bool HttpClient::parse_response(boost::asio::io_context& io_context,
                                 Response& response,
                                 int timeout) {
     try {
+        boost::system::error_code ec;
+
         // 发送请求
-        socket.write_some(boost::asio::buffer(request.to_string()));
+        socket.async_write_some(boost::asio::buffer(request.to_string()),
+                                [&](const boost::system::error_code& err, std::size_t bytes_transferred){ ec = err; });
+        if (timelimit(io_context, timeout) || ec) {
+            ec ? LOGOUT(http::log::ERROR, "write error url=%", request.Url())
+               : LOGOUT(http::log::ERROR, "write timeout url=%", request.Url());
+            return false;
+        }
 
         boost::asio::streambuf response_streambuf;
         istream response_stream(&response_streambuf);
 
         // 解析状态行
-        boost::asio::read_until(socket, response_streambuf, "\r\n");
+        boost::asio::async_read_until(socket,
+                                      response_streambuf,
+                                      "\r\n",
+                                      [&](const boost::system::error_code& err, std::size_t bytes_transferred){ ec = err; });
+        if (timelimit(io_context, timeout) || ec) {
+            ec ? LOGOUT(http::log::ERROR, "read error url=%", request.Url())
+               : LOGOUT(http::log::ERROR, "read timeout url=%", request.Url());
+            return false;
+        }
+
         string response_line;
         getline(response_stream, response_line);
 
@@ -125,7 +142,16 @@ bool HttpClient::parse_response(boost::asio::io_context& io_context,
         parse_response_line(response_line, response);
 
         // 解析响应头
-        boost::asio::read_until(socket, response_streambuf, "\r\n\r\n");
+        boost::asio::async_read_until(socket,
+                                      response_streambuf,
+                                      "\r\n\r\n",
+                                      [&](const boost::system::error_code& err, std::size_t bytes_transferred){ ec = err; });
+        if (timelimit(io_context, timeout) || ec) {
+            ec ? LOGOUT(http::log::ERROR, "read error url=%", request.Url())
+               : LOGOUT(http::log::ERROR, "read timeout url=%", request.Url());
+            return false;
+        }
+
         string header_line;
         while (getline(response_stream, header_line) && header_line != "\r") {
             size_t pos = header_line.find(":");
@@ -148,7 +174,16 @@ bool HttpClient::parse_response(boost::asio::io_context& io_context,
 
             while (true) {
                 while ((pos = chunked_body.find("\r\n", cur)) == string::npos) {
-                    boost::asio::read_until(socket, response_streambuf, "\r\n");
+                    boost::asio::async_read_until(socket,
+                                                  response_streambuf,
+                                                  "\r\n",
+                                                  [&](const boost::system::error_code& err, std::size_t bytes_transferred){ ec = err; });
+                    if (timelimit(io_context, timeout) || ec) {
+                        ec ? LOGOUT(http::log::ERROR, "read error url=%", request.Url())
+                           : LOGOUT(http::log::ERROR, "read timeout url=%", request.Url());
+                        return false;
+                    }
+
                     boost::asio::streambuf::const_buffers_type cbt = response_streambuf.data();
                     string read_str(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
                     chunked_body += read_str;
@@ -161,7 +196,6 @@ bool HttpClient::parse_response(boost::asio::io_context& io_context,
                 while (chunked_body.size()-cur < len+2) {
                     int need_len = len + 2 - chunked_body.size() + cur;
 
-                    boost::system::error_code ec;
                     boost::asio::async_read(socket,
                                             response_streambuf,
                                             boost::asio::transfer_at_least(need_len),
@@ -191,7 +225,6 @@ bool HttpClient::parse_response(boost::asio::io_context& io_context,
             response_body += first;
             response_streambuf.consume(first.size());
 
-            boost::system::error_code ec;
             boost::asio::async_read(socket,
                                     response_streambuf,
                                     boost::asio::transfer_at_least(content_length - first.size()),
@@ -251,6 +284,9 @@ Response HttpClient::http_request(const string& url,
                                   int timeout,
                                   int redirect_count) {
 #ifdef debug
+    if (redirect_count == 0) {
+        cerr << url << endl;
+    }
     timeval start, end, dot;
     mark_performance(start);
 #endif
