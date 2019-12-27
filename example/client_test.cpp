@@ -10,12 +10,13 @@ using namespace http::utils;
 
 int main () {
     vector<string> test_urls {
-        "http://www.cneo.com.cn/",      // timeout
-        "http://www.gsei.com.cn/",      // timeout
-        "http://www.rushan-wmw.com/",   // timeout
-        "http://www.baidu.com/",        // http
-        "http://www.huanqiu.com/",      // redirect
-        "https://www.huanqiu.com/"      // https
+        //"http://www.cneo.com.cn/",      // timeout
+        //"http://www.gsei.com.cn/",      // timeout
+        //"http://www.rushan-wmw.com/",   // timeout
+        //"http://www.baidu.com/",        // http
+        //"http://www.huanqiu.com/",      // redirect
+        //"https://www.huanqiu.com/"      // https
+        //"http://lol.52pk.com/taglist/ksearch.php?\nkeyword=afreeca" // bug
     };
     
     map<string, string> headers;

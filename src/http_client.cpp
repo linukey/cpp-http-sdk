@@ -88,6 +88,10 @@ bool HttpClient::parse_response_line(const string& response_line,
                                      Response& response) {
     vector<string> ret;
     boost::split(ret, response_line, boost::is_any_of(" "));
+    if (ret.size() != 3) {
+        LOGOUT(http::log::ERROR, "error response_line:% url=%", response_line, request.Url());
+        return false;
+    }
 
     response.setProtocol(ret[0]);
     response.setStatusCode(ret[1]);
@@ -139,7 +143,9 @@ bool HttpClient::parse_response(boost::asio::io_context& io_context,
         getline(response_stream, response_line);
 
         boost::trim(response_line);
-        parse_response_line(response_line, response);
+        if (!parse_response_line(response_line, response)) {
+            return false;
+        }
 
         // 解析响应头
         boost::asio::async_read_until(socket,
