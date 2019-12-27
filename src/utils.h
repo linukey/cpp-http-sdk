@@ -9,6 +9,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <sys/time.h>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
@@ -42,6 +43,12 @@ void urldecode(const std::string& encd, std::string& decd);
  * 获取 url extension
  */
 std::string get_extension_from_url(const std::string& url);
+
+/*
+ * 性能计算（ms）
+ */
+void mark_performance(timeval& dot);
+int performance(timeval& start, timeval& end);
 
 }}
 

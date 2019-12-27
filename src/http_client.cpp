@@ -13,7 +13,10 @@
 #include "utils.h"
 #include "request.h"
 
+//#define debug
+
 using namespace std;
+using namespace http::utils;
 using boost::asio::ip::tcp;
 using http::request::Request;
 
@@ -247,6 +250,10 @@ Response HttpClient::http_request(const string& url,
                                   const string& data,
                                   int timeout,
                                   int redirect_count) {
+#ifdef debug
+    timeval start, end, dot;
+    mark_performance(start);
+#endif
     Response response;
     string protocol, host, port;
 
@@ -268,7 +275,9 @@ Response HttpClient::http_request(const string& url,
 
     try {
         boost::asio::io_context io_context;
-
+#ifdef debug
+        mark_performance(dot);
+#endif
         // 根据 hostname 查询 ip 地址
         tcp::resolver resolver(io_context);
         tcp::resolver::results_type endpoints = resolver.resolve(host, protocol);
@@ -280,16 +289,23 @@ Response HttpClient::http_request(const string& url,
                 break;
             }
         }
-
+#ifdef debug
+        mark_performance(end);
+        if (redirect_count == 0) {
+            cerr << "resolve cost " << performance(dot, end) << "ms" << endl;
+        }
+#endif
         // 如果没有查询到有效 ip 地址，直接写入请求的 ip 地址以及 port
         if (endpoint.address().to_string() == "0.0.0.0") {
             boost::asio::ip::address ad = boost::asio::ip::address::from_string(host);
             endpoint = boost::asio::ip::tcp::endpoint(ad, stoi(port));
         }
 
-
         // https
         if (protocol == "https") {
+#ifdef debug
+            mark_performance(dot);
+#endif
             boost::asio::ssl::context ctx(boost::asio::ssl::context::tlsv12_client);
             ctx.set_verify_mode(boost::asio::ssl::verify_none);
             boost::asio::ssl::stream<tcp::socket> socket{io_context, ctx};
@@ -309,16 +325,30 @@ Response HttpClient::http_request(const string& url,
                 socket.lowest_layer().close();
                 return response;
             }
-
+#ifdef debug
+            mark_performance(end);
+            if (redirect_count == 0) {
+                cerr << "connect cost " << performance(dot, end) << "ms" << endl;
+            }
+            mark_performance(dot);
+#endif
             socket.handshake(boost::asio::ssl::stream_base::client);
             if (!parse_response(io_context, socket, request, response, timeout)) {
                 socket.lowest_layer().close();
                 return response;
             }
-
+#ifdef debug
+            mark_performance(end);
+            if (redirect_count == 0) {
+                cerr << "parse response cost " << performance(dot, end) << "ms" << endl;
+            }
+#endif
             socket.lowest_layer().close();
         // http
         } else if (protocol == "http") {
+#ifdef debug
+            mark_performance(dot);
+#endif
             tcp::socket socket(io_context);
             boost::system::error_code ec;
             socket.async_connect(endpoint, [&](const boost::system::error_code& error){ ec = error; });
@@ -328,15 +358,28 @@ Response HttpClient::http_request(const string& url,
                 socket.close();
                 return response;
             }
-
+#ifdef debug
+            mark_performance(end);
+            if (redirect_count == 0) {
+                cerr << "connect cost " << performance(dot, end) << "ms" << endl;
+            }
+            mark_performance(dot);
+#endif
             if (!parse_response(io_context, socket, request, response, timeout)) {
                 socket.close();
                 return response;
             }
-
+#ifdef debug
+            mark_performance(end);
+            if (redirect_count == 0) {
+                cerr << "parse response cost " << performance(dot, end) << "ms" << endl;
+            }
+#endif
             socket.close();
         }
-
+#ifdef debug
+        mark_performance(dot);
+#endif
         // 3xx Redirection
         if (redirect_count <= 5) {
             string code = response.StatusCode();
@@ -349,7 +392,13 @@ Response HttpClient::http_request(const string& url,
                 }
             }
         }
-
+#ifdef debug
+        mark_performance(end);
+        if (redirect_count == 0) {
+            cerr << "redirect cost " << performance(dot, end) << "ms" << endl;
+            cerr << "all cost " << performance(start, end) << "ms" << endl;
+        }
+#endif
         return response;
     } catch (const exception& e) {
         LOGOUT(http::log::FATAL, "%", e.what());

@@ -76,4 +76,12 @@ std::string get_extension_from_url(const std::string& url) {
     return "";
 };
 
+void mark_performance(timeval& dot) {
+    gettimeofday(&dot, NULL);
+}
+
+int performance(timeval& start, timeval& end) {
+    return 1000*(end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec)/1000;
+}
+
 }}
