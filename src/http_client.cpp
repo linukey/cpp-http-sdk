@@ -101,9 +101,11 @@ bool HttpClient::parse_response_line(const string& response_line,
 }
 
 template<class T>
-void HttpClient::parse_response(T& socket,
+bool HttpClient::parse_response(boost::asio::io_context& io_context,
+                                T& socket,
                                 Request& request,
-                                Response& response) {
+                                Response& response,
+                                int timeout) {
     try {
         // 发送请求
         socket.write_some(boost::asio::buffer(request.to_string()));
@@ -155,7 +157,18 @@ void HttpClient::parse_response(T& socket,
                 cur = cur + (pos-cur) + 2;
                 while (chunked_body.size()-cur < len+2) {
                     int need_len = len + 2 - chunked_body.size() + cur;
-                    boost::asio::read(socket, response_streambuf, boost::asio::transfer_at_least(need_len));
+
+                    boost::system::error_code ec;
+                    boost::asio::async_read(socket,
+                                            response_streambuf,
+                                            boost::asio::transfer_at_least(need_len),
+                                            [&](const boost::system::error_code& err, std::size_t bytes_transferred){ ec = err; });
+                    if (timelimit(io_context, timeout) || ec) {
+                        ec ? LOGOUT(http::log::ERROR, "read error url=%", request.Url())
+                           : LOGOUT(http::log::ERROR, "read timeout url=%", request.Url());
+                        return false;
+                    }
+
                     boost::asio::streambuf::const_buffers_type cbt = response_streambuf.data();
                     string read_str(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
                     chunked_body += read_str;
@@ -175,7 +188,16 @@ void HttpClient::parse_response(T& socket,
             response_body += first;
             response_streambuf.consume(first.size());
 
-            boost::asio::read(socket, response_streambuf, boost::asio::transfer_at_least(content_length - first.size()));
+            boost::system::error_code ec;
+            boost::asio::async_read(socket,
+                                    response_streambuf,
+                                    boost::asio::transfer_at_least(content_length - first.size()),
+                                    [&](const boost::system::error_code& err, std::size_t bytes_transferred){ ec = err; });
+            if (timelimit(io_context, timeout) || ec) {
+                ec ? LOGOUT(http::log::ERROR, "read error url=%", request.Url())
+                   : LOGOUT(http::log::ERROR, "read timeout url=%", request.Url());
+                return false;
+            }
 
             cbt = response_streambuf.data();
             string rest(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
@@ -192,29 +214,10 @@ void HttpClient::parse_response(T& socket,
             http::utils::gzip_decompress(data, decompress_data);
         }
 
-        return;
+        return true;
     } catch (const exception& e) {
         LOGOUT(http::log::FATAL, "%", e.what());
-        return;
-    }
-}
-
-void HttpClient::connect_handler_http(tcp::socket& socket,
-                                      Request& request,
-                                      Response& response,
-                                      const boost::system::error_code& error) {
-    if (!error) {
-        parse_response(socket, request, response);
-    }
-}
-
-void HttpClient::connect_handler_https(boost::asio::ssl::stream<tcp::socket>& socket,
-                                       Request& request,
-                                       Response& response,
-                                       const boost::system::error_code& error) {
-    if (!error) {
-        socket.handshake(boost::asio::ssl::stream_base::client);
-        parse_response(socket, request, response);
+        return false;
     }
 }
 
@@ -229,6 +232,13 @@ string HttpClient::build_redirection_url(const string& protocol,
     }
 
     return redirect;
+}
+
+bool HttpClient::timelimit(boost::asio::io_context& io_context,
+                           int timeout) {
+    io_context.restart();
+    io_context.run_for(std::chrono::seconds(timeout));
+    return !io_context.stopped();
 }
 
 Response HttpClient::http_request(const string& url,
@@ -291,33 +301,40 @@ Response HttpClient::http_request(const string& url,
                     throw boost::system::system_error{ec};
             }
 
-            socket.lowest_layer().async_connect(endpoint, boost::bind(&HttpClient::connect_handler_https,
-                                                                      this,
-                                                                      ref(socket),
-                                                                      ref(request),
-                                                                      ref(response),
-                                                                      _1));
-            // set timeout
-            io_context.run_for(std::chrono::seconds(timeout));
-            if (!io_context.stopped()) {
-                LOGOUT(http::log::ERROR, "timeout url=%", url);
+            boost::system::error_code ec;
+            socket.lowest_layer().async_connect(endpoint, [&](const boost::system::error_code& error){ ec = error; });
+            if (timelimit(io_context, timeout) || ec) {
+                ec ? LOGOUT(http::log::ERROR, "connect error url=%", url)
+                   : LOGOUT(http::log::ERROR, "connect timeout url=%", url);
                 socket.lowest_layer().close();
+                return response;
             }
+
+            socket.handshake(boost::asio::ssl::stream_base::client);
+            if (!parse_response(io_context, socket, request, response, timeout)) {
+                socket.lowest_layer().close();
+                return response;
+            }
+
+            socket.lowest_layer().close();
         // http
         } else if (protocol == "http") {
             tcp::socket socket(io_context);
-            socket.async_connect(endpoint, boost::bind(&HttpClient::connect_handler_http,
-                                                       this,
-                                                       ref(socket),
-                                                       ref(request),
-                                                       ref(response),
-                                                       _1));
-            // set timeout
-            io_context.run_for(std::chrono::seconds(timeout));
-            if (!io_context.stopped()) {
-                LOGOUT(http::log::ERROR, "timeout url=%", url);
+            boost::system::error_code ec;
+            socket.async_connect(endpoint, [&](const boost::system::error_code& error){ ec = error; });
+            if (timelimit(io_context, timeout) || ec) {
+                ec ? LOGOUT(http::log::ERROR, "connect error url=%", url)
+                   : LOGOUT(http::log::ERROR, "connect timeout url=%", url);
                 socket.close();
+                return response;
             }
+
+            if (!parse_response(io_context, socket, request, response, timeout)) {
+                socket.close();
+                return response;
+            }
+
+            socket.close();
         }
 
         // 3xx Redirection

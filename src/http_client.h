@@ -32,7 +32,7 @@ public:
      * method  : 请求方法
      * headers : 请求头
      * data    : 请求体
-     * timeout : 
+     * timeout : 超时
      *
      * Response : 响应报文信息
      *
@@ -61,22 +61,15 @@ private:
                                std::map<std::string,
                                std::string>* headers,
                                Request& request);
-
-    void connect_handler_http(boost::asio::ip::tcp::socket& socket,
-                              http::request::Request& request,
-                              http::response::Response& response,
-                              const boost::system::error_code& error);
-
-    void connect_handler_https(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,
-                               Request& request,
-                               Response& response,
-                               const boost::system::error_code& error);
-
+    /*
+     * 处理响应报文
+     */
     template<class T>
-    void parse_response(T& socket,
+    bool parse_response(boost::asio::io_context& io_context,
+                        T& socket,
                         Request& request,
-                        Response& response);
-
+                        Response& response,
+                        int timeout);
     /*
      * 解析响应报文状态行
      */
@@ -88,6 +81,10 @@ private:
     string build_redirection_url(const string& protocol,
                                  const string& host,
                                  Response& response);
+    /*
+     * 异步操作超时限制
+     */
+    bool timelimit(boost::asio::io_context& io_context, int timeout);
 };
 
 }}
