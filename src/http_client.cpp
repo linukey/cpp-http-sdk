@@ -89,7 +89,6 @@ bool HttpClient::parse_response_line(const string& response_line,
     vector<string> ret;
     boost::split(ret, response_line, boost::is_any_of(" "));
     if (ret.size() != 3) {
-        LOGOUT(http::log::ERROR, "error response_line:% url=%", response_line, request.Url());
         return false;
     }
 
@@ -144,6 +143,7 @@ bool HttpClient::parse_response(boost::asio::io_context& io_context,
 
         boost::trim(response_line);
         if (!parse_response_line(response_line, response)) {
+            LOGOUT(http::log::ERROR, "error response_line:% url=%", response_line, request.Url());
             return false;
         }
 
