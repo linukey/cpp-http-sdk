@@ -240,9 +240,10 @@ void HttpClient::parse_response(boost::asio::io_context& io_context,
             string rest(boost::asio::buffers_begin(cbt), boost::asio::buffers_end(cbt));
             response_body += rest;
             response_streambuf.consume(rest.size());
-        } else {
-            throw HttpException("no content-length and transfer-encoding");
         }
+        //} else {
+            // 空包体
+            // example: http://memory.thethirdmedia.com/
 
         // 如果是gzip，解压
         if (boost::to_lower_copy(response.Header("Content-Encoding")) == "gzip") {
