@@ -65,7 +65,7 @@ private:
      * 处理响应报文
      */
     template<class T>
-    bool parse_response(boost::asio::io_context& io_context,
+    void parse_response(boost::asio::io_context& io_context,
                         T& socket,
                         Request& request,
                         Response& response,
