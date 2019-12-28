@@ -88,20 +88,23 @@ bool HttpClient::parse_response_line(const string& response_line,
                                      Response& response) {
     vector<string> ret;
     boost::split(ret, response_line, boost::is_any_of(" "));
-    if (ret.size() != 3) {
+    if (ret.size() < 2) {
         return false;
     }
 
     response.setProtocol(ret[0]);
     response.setStatusCode(ret[1]);
-    string status_des;
-    for (int i = 2; i < ret.size(); ++i) {
-        status_des += ret[i];
-        if (i != ret.size()-1) {
-            status_des += " ";
+    // Reason-Phrase  = *<TEXT, excluding CR, LF>
+    if (ret.size() > 2) {
+        string status_des;
+        for (int i = 2; i < ret.size(); ++i) {
+            status_des += ret[i];
+            if (i != ret.size()-1) {
+                status_des += " ";
+            }
         }
+        response.setStatusDescribe(status_des);
     }
-    response.setStatusDescribe(status_des);
 
     return response.Protocol().substr(0, 5) == "HTTP/";
 }
