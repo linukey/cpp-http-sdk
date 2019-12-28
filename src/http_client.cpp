@@ -9,7 +9,6 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/bind.hpp>
 
-#include "log.h"
 #include "utils.h"
 #include "request.h"
 
@@ -427,7 +426,6 @@ Response HttpClient::http_request(const string& url,
                 string lower_method = boost::to_lower_copy(method);
                 if (lower_method == "get" || lower_method == "head") {
                     string re_url = build_redirection_url(protocol, host, response);
-                    LOGOUT(http::log::INFO, "% redirect to %", url, re_url);
                     response = http_request(re_url, method, headers, data, timeout, redirect_count+1);
                 }
             }
