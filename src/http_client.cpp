@@ -122,7 +122,7 @@ void HttpClient::parse_response(boost::asio::io_context& io_context,
         socket.async_write_some(boost::asio::buffer(request.to_string()),
                                 [&](const boost::system::error_code& err, std::size_t bytes_transferred){ ec = err; });
         if (timelimit(io_context, timeout) || ec) {
-            throw ec ? "write error" : "write timeout";
+            throw ec ? HttpException("write error") : HttpException("write timeout");
         }
 
         boost::asio::streambuf response_streambuf;
@@ -134,7 +134,7 @@ void HttpClient::parse_response(boost::asio::io_context& io_context,
                                       "\r\n",
                                       [&](const boost::system::error_code& err, std::size_t bytes_transferred){ ec = err; });
         if (timelimit(io_context, timeout) || ec) {
-            throw ec ? "read error" : "read timeout";
+            throw ec ? HttpException("read error") : HttpException("read timeout");
         }
 
         string response_line;
@@ -142,7 +142,7 @@ void HttpClient::parse_response(boost::asio::io_context& io_context,
 
         boost::trim(response_line);
         if (!parse_response_line(response_line, response)) {
-            throw "error response_line" + response_line;
+            throw HttpException("error response_line" + response_line);
         }
 
         // 解析响应头
@@ -151,7 +151,7 @@ void HttpClient::parse_response(boost::asio::io_context& io_context,
                                       "\r\n\r\n",
                                       [&](const boost::system::error_code& err, std::size_t bytes_transferred){ ec = err; });
         if (timelimit(io_context, timeout) || ec) {
-            throw ec ? "read error" : "read timeout";
+            throw ec ? HttpException("read error") : HttpException("read timeout");
         }
 
         string header_line;
@@ -181,7 +181,7 @@ void HttpClient::parse_response(boost::asio::io_context& io_context,
                                                   "\r\n",
                                                   [&](const boost::system::error_code& err, std::size_t bytes_transferred){ ec = err; });
                     if (timelimit(io_context, timeout) || ec) {
-                        throw ec ? "read error" : "read timeout";
+                        throw ec ? HttpException("read error") : HttpException("read timeout");
                     }
 
                     boost::asio::streambuf::const_buffers_type cbt = response_streambuf.data();
@@ -201,7 +201,7 @@ void HttpClient::parse_response(boost::asio::io_context& io_context,
                                             boost::asio::transfer_at_least(need_len),
                                             [&](const boost::system::error_code& err, std::size_t bytes_transferred){ ec = err; });
                     if (timelimit(io_context, timeout) || ec) {
-                        throw ec ? "read error" : "read timeout";
+                        throw ec ? HttpException("read error") : HttpException("read timeout");
                     }
 
                     boost::asio::streambuf::const_buffers_type cbt = response_streambuf.data();
@@ -228,7 +228,7 @@ void HttpClient::parse_response(boost::asio::io_context& io_context,
                                     boost::asio::transfer_at_least(content_length - first.size()),
                                     [&](const boost::system::error_code& err, std::size_t bytes_transferred){ ec = err; });
             if (timelimit(io_context, timeout) || ec) {
-                throw ec ? "read error" : "read timeout";
+                throw ec ? HttpException("read error") : HttpException("read timeout");
             }
 
             cbt = response_streambuf.data();
@@ -236,7 +236,7 @@ void HttpClient::parse_response(boost::asio::io_context& io_context,
             response_body += rest;
             response_streambuf.consume(rest.size());
         } else {
-            throw "no content-length and transfer-encoding";
+            throw HttpException("no content-length and transfer-encoding");
         }
 
         // 如果是gzip，解压
@@ -246,7 +246,7 @@ void HttpClient::parse_response(boost::asio::io_context& io_context,
             http::utils::gzip_decompress(data, decompress_data);
         }
     } catch (const exception& e) {
-        throw e.what();
+        throw HttpException(e.what());
     }
 }
 
@@ -292,12 +292,12 @@ Response HttpClient::http_request(const string& url,
 
     // 解析 协议头、host、port
     if (!extract_host_port(url, protocol, host, port)) {
-        throw "not valid url!";
+        throw HttpException("not valid url!");
     }
 
     // 支持 http、https 协议
     if (protocol != "http" && protocol != "https") {
-        throw "protocol % error, only support http and https!";
+        throw HttpException("protocol error, only support http and https!");
     }
 
     // 设置请求报文
@@ -311,7 +311,10 @@ Response HttpClient::http_request(const string& url,
 #endif
         // 根据 hostname 查询 ip 地址
         tcp::resolver resolver(io_context);
-        tcp::resolver::results_type endpoints = resolver.resolve(host, protocol);
+        boost::system::error_code ec;
+        tcp::resolver::results_type endpoints = resolver.resolve(host, protocol, ec);
+        if (ec) { throw HttpException(ec.message()); }
+
         boost::asio::ip::tcp::endpoint endpoint;
         for (auto it = endpoints.begin(); it != endpoints.end(); ++it) {
             boost::asio::ip::tcp::endpoint ep = *it;
@@ -352,7 +355,7 @@ Response HttpClient::http_request(const string& url,
             socket.lowest_layer().async_connect(endpoint, [&](const boost::system::error_code& error){ ec = error; });
             if (timelimit(io_context, timeout) || ec) {
                 socket.lowest_layer().close();
-                throw ec ? "connect error" :"connect timeout";
+                throw ec ? HttpException("connect error") : HttpException("connect timeout");
             }
 #ifdef debug
             mark_performance(end);
@@ -364,7 +367,7 @@ Response HttpClient::http_request(const string& url,
             socket.handshake(boost::asio::ssl::stream_base::client);
             try {
                 parse_response(io_context, socket, request, response, timeout);
-            } catch (const char* ex) {
+            } catch (const HttpException& ex) {
                 socket.lowest_layer().close();
                 throw ex;
             }
@@ -385,7 +388,7 @@ Response HttpClient::http_request(const string& url,
             socket.async_connect(endpoint, [&](const boost::system::error_code& error){ ec = error; });
             if (timelimit(io_context, timeout) || ec) {
                 socket.close();
-                throw ec ? "connect error" : "connect timeout";
+                throw ec ? HttpException("connect error") : HttpException("connect timeout");
             }
 #ifdef debug
             mark_performance(end);
@@ -396,7 +399,7 @@ Response HttpClient::http_request(const string& url,
 #endif
             try {
                 parse_response(io_context, socket, request, response, timeout);
-            } catch (const char* ex) {
+            } catch (const HttpException& ex) {
                 socket.close();
                 throw ex;
             }
@@ -431,8 +434,10 @@ Response HttpClient::http_request(const string& url,
         }
 #endif
         return response;
+    } catch (const HttpException& e) {
+        throw e;
     } catch (const exception& e) {
-        throw e.what();
+        throw e;
     }
 }
 
