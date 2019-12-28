@@ -163,6 +163,11 @@ void HttpClient::parse_response(boost::asio::io_context& io_context,
             response.setHeader(key, value);
         }
 
+        // 拦截 4xx 5xx
+        if (response.StatusCode()[0] == '4' || response.StatusCode()[0] == '5') {
+            throw HttpException("HTTP Error " + response.StatusCode() + ":" + response.StatusDescribe());
+        }
+
         // 接收包体
         string& response_body = response.setData();
         // chunked
