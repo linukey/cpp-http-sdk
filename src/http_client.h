@@ -43,6 +43,27 @@ public:
                           const std::string& data,
                           int timeout = 2,
                           int redirect_count = 0);
+
+    /*
+     * func : http客户端请求，支持https、页面渲染
+     * 
+     * url     : 请求url
+     * method  : 请求方法
+     * headers : 请求头
+     * data    : 请求体
+     * timeout : 超时
+     *
+     * Response : 响应报文信息
+     *
+     */
+    Response http_request_render(const std::string& url,
+                                 const std::string& method,
+                                 std::map<string, string>* headers,
+                                 const std::string& data,
+                                 int timeout = 2,
+                                 int redirect_count = 0,
+                                 int argc = 1,
+                                 char* argv[] = nullptr);
 private:
     /*
      * func : 从url中提取host
