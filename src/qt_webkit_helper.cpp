@@ -24,6 +24,8 @@ QNetworkReply* NetworkAccessManager::createRequest(QNetworkAccessManager::Operat
                                                    const QNetworkRequest& req,
                                                    QIODevice *data) {
     QNetworkRequest request(req);
+    // 不需要手动指定 accept-encoding : gzip
+    // https://code.qt.io/cgit/qt/qtbase.git/tree/src/network/access/qhttpnetworkconnection.cpp?h=5.11#n299
     request.setRawHeader("User-Agent", "Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Mobile Safari/537.36");
     return QNetworkAccessManager::createRequest(op, request, data);
 }
