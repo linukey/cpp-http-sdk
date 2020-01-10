@@ -459,21 +459,21 @@ Response HttpClient::http_request_render(const string& url,
 	QApplication app(argc, argv);
 
     Response response;
-	http::qt_helper::WebPage *w = new http::qt_helper::WebPage(app, response);
-	w->settings()->setAttribute(QWebSettings::PrivateBrowsingEnabled, true);
-	w->settings()->setAttribute(QWebSettings::PluginsEnabled, false);
-	w->settings()->setAttribute(QWebSettings::JavaEnabled, false);
-	w->settings()->setAttribute(QWebSettings::AutoLoadImages, false);
-	w->settings()->setAttribute(QWebSettings::DnsPrefetchEnabled, true);
-	w->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
+	http::qt_helper::WebPage w(app, response);
+	w.settings()->setAttribute(QWebSettings::PrivateBrowsingEnabled, true);
+	w.settings()->setAttribute(QWebSettings::PluginsEnabled, false);
+	w.settings()->setAttribute(QWebSettings::JavaEnabled, false);
+	w.settings()->setAttribute(QWebSettings::AutoLoadImages, false);
+	w.settings()->setAttribute(QWebSettings::DnsPrefetchEnabled, true);
+	w.settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
 
-    QTimer *t = new QTimer();
-    QObject::connect(t, &QTimer::timeout, [&app](){ app.quit(); });
-    t->setSingleShot(true);
-    t->start(timeout * 1000);
+    QTimer t;
+    QObject::connect(&t, &QTimer::timeout, [&app](){ app.quit(); });
+    t.setSingleShot(true);
+    t.start(timeout * 1000);
 
     QUrl q_url(url.c_str());
-	w->load(q_url.toString());
+	w.load(q_url.toString());
 	app.exec();
 
     return response;
